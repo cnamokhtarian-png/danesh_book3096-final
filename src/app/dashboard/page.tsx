@@ -79,6 +79,15 @@ export default async function DashboardPage() {
               <Icon name="plus" className="size-4.5" />
               آگهی جدید
             </Link>
+            {user.role === "admin" && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 rounded-2xl bg-ink-900 px-4 py-2.5 text-[13px] font-bold text-white transition hover:bg-brand-700"
+              >
+                <Icon name="shield" className="size-4.5" />
+                پنل مدیریت
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -138,6 +147,9 @@ export default async function DashboardPage() {
                       variant="icon"
                       title={book.title}
                       path={`/books/${book.id}`}
+                      kind="ad"
+                      price={book.price}
+                      university={book.university}
                     />
                     <BookOwnerActions id={book.id} status={book.status} />
                   </div>

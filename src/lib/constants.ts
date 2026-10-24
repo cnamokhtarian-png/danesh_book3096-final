@@ -198,6 +198,22 @@ export function konkurSubjectEmoji(value: string): string {
   return KONKUR_SUBJECTS.find((s) => s.value === value)?.emoji ?? "🎯";
 }
 
+/** گرادiente کاور پیش‌فرض بر اساس دسته‌بندی (هنگامی که آگهی عکس ندارد). */
+export const COVER_GRADIENTS: Record<string, string> = {
+  engineering: "from-blue-500 via-cyan-600 to-blue-700",
+  medicine: "from-emerald-400 via-teal-600 to-emerald-700",
+  basic: "from-amber-400 via-orange-600 to-amber-700",
+  humanities: "from-indigo-500 via-purple-600 to-indigo-700",
+  management: "from-rose-500 via-orange-400 to-rose-600",
+  art: "from-fuchsia-500 via-violet-600 to-fuchsia-700",
+  language: "from-cyan-400 via-blue-600 to-cyan-700",
+  general: "from-brand-600 via-accent-500 to-brand-700",
+};
+
+export function coverGradient(category: string): string {
+  return COVER_GRADIENTS[category] ?? COVER_GRADIENTS.general;
+}
+
 export function conditionLabel(value: string): string {
   return CONDITIONS.find((c) => c.value === value)?.label ?? "خوب";
 }

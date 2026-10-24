@@ -40,6 +40,8 @@ export type IconName =
   | "exam"
   | "gift"
   | "headset"
+  | "image"
+  | "camera"
   | "inbox"
   | "phone"
   | "chart";
@@ -218,6 +220,18 @@ const ICONS: Record<IconName, React.ReactNode> = {
       <path d="M4 14h2.5a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
       <path d="M20 14h-2.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1H19a1 1 0 0 0 1-1z" />
       <path d="M17 19v.5a2.5 2.5 0 0 1-2.5 2.5H12" />
+    </>
+  ),
+  image: (
+    <>
+      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" />
+      <path d="M7 9l1.5 1.5L13 7l2 2 4-4 6 6z" />
+    </>
+  ),
+  camera: (
+    <>
+      <path d="M14.5 4h-5L7 7H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2z" />
+      <circle cx="12" cy="9" r="3" />
     </>
   ),
   inbox: (

@@ -56,6 +56,256 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
   const [fileLink, setFileLink] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  /* ----------------------------------- عکس‌ها ----------------------------------- */
+
+  type PhotoEntry = {
+    id: number;
+    file: File;
+    previewUrl: string;
+    width: number;
+    height: number;
+    status: "idle" | "uploading" | "done" | "error";
+    percent: number;
+    photoId?: number;
+    error?: string;
+  };
+
+  const MAX_PHOTOS_PER_BOOK = 3;
+  const MAX_IMAGE_WIDTH = 1200;
+  const IMAGE_QUALITY = 0.8;
+  const TARGET_IMAGE_BYTES = 300 * 1024; // هدف: حدود ۳۰۰ کیلوبایت
+
+  const [photos, setPhotos] = useState<PhotoEntry[]>([]);
+  const [photoError, setPhotoError] = useState("");
+  const replacingId = useRef<number | null>(null);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+
+  /** فشرده‌سازی سمت کلاینت: حداکثر عرض ۱۲۰۰px، کیفیت ۰.۸، WebP اگر پشتیبانی شود. */
+  async function compressImage(selected: File): Promise<{
+    file: File;
+    mimeType: string;
+    width: number;
+    height: number;
+  }> {
+    const bitmap = await createImageBitmap(selected);
+    let { width, height } = bitmap;
+    if (width > MAX_IMAGE_WIDTH) {
+      height = Math.round((height * MAX_IMAGE_WIDTH) / width);
+      width = MAX_IMAGE_WIDTH;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("رندرینگ تصویر امکان‌پذیر نیست.");
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    const probe = document.createElement("canvas");
+    probe.width = 1;
+    probe.height = 1;
+    const webpSupported = probe
+      .toDataURL("image/webp")
+      .startsWith("data:image/webp");
+    const mimeType = webpSupported ? "image/webp" : "image/jpeg";
+
+    const qualities = [IMAGE_QUALITY, 0.6, 0.45, 0.3, 0.2];
+    let result: Blob | null = null;
+    for (const quality of qualities) {
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((b) => resolve(b ?? null), mimeType, quality);
+      });
+      if (!blob) continue;
+      if (!result || blob.size < result.size) result = blob;
+      if (blob.size <= TARGET_IMAGE_BYTES) break;
+    }
+    if (!result) throw new Error("فشرده‌سازی تصویر انجام نشد.");
+
+    const ext = mimeType === "image/webp" ? "webp" : "jpg";
+    return {
+      file: new File([result], `photo-${Date.now()}.${ext}`, { type: mimeType }),
+      mimeType,
+      width,
+      height,
+    };
+  }
+
+  function revokePreview(url: string) {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {
+      /* نادیده گرفته شود — مرورگر هر زمان پاک‌سازی می‌کند */
+    }
+  }
+
+  async function addSelectedFiles(selected: FileList | File[] | null) {
+    const files = selected ? Array.from(selected) : [];
+    if (!files.length) return;
+
+    setPhotoError("");
+    const availableSlots = MAX_PHOTOS_PER_BOOK - photos.length;
+    if (availableSlots <= 0) {
+      setPhotoError("حداکثر ۳ عکس می‌توانید برای هر آگهی انتخاب کنید.");
+      return;
+    }
+    const toAdd = files.slice(0, availableSlots);
+    if (files.length > availableSlots) {
+      setPhotoError(`فقط ${availableSlots} عکس دیگر قابل اضافه است (حداکثر ۳ عکس).`);
+    }
+
+    const now = Date.now();
+    const entries: PhotoEntry[] = toAdd.map((file, index) => ({
+      id: now + index,
+      file,
+      previewUrl: URL.createObjectURL(file),
+      width: 0,
+      height: 0,
+      status: "idle",
+      percent: 0,
+    }));
+
+    if (replacingId.current !== null) {
+      setPhotos((prev) =>
+        prev.map((entry) => {
+          if (entry.id !== replacingId.current) return entry;
+          revokePreview(entry.previewUrl);
+          return { ...entries[0], status: "idle", percent: 0 };
+        }),
+      );
+      replacingId.current = null;
+      return;
+    }
+
+    setPhotos((prev) => [...prev, ...entries]);
+    for (const entry of entries) {
+      uploadPhoto(entry);
+    }
+  }
+
+  async function uploadPhoto(entry: PhotoEntry) {
+    try {
+      const compressed = await compressImage(entry.file);
+      revokePreview(entry.previewUrl);
+
+      setPhotos((prev) =>
+        prev.map((e) =>
+          e.id === entry.id
+            ? {
+                ...e,
+                file: compressed.file,
+                previewUrl: URL.createObjectURL(compressed.file),
+                width: compressed.width,
+                height: compressed.height,
+                status: "uploading",
+                percent: 0,
+              }
+            : e,
+        ),
+      );
+
+      const data = new FormData();
+      data.append("file", compressed.file);
+      data.append("width", String(compressed.width));
+      data.append("height", String(compressed.height));
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/photos");
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setPhotos((prev) =>
+              prev.map((e) =>
+                e.id === entry.id
+                  ? { ...e, percent: Math.round((event.loaded / event.total) * 100) }
+                  : e,
+              ),
+            );
+          }
+        };
+        xhr.onload = () => {
+          let payload: { ok?: boolean; message?: string; photo?: { id: number } } = {};
+          try {
+            payload = JSON.parse(xhr.responseText);
+          } catch {
+            /* pairs below */
+          }
+          if (xhr.status >= 200 && xhr.status < 300 && payload.photo) {
+            const photoId = payload.photo.id;
+            setPhotos((prev) =>
+              prev.map((e) =>
+                e.id === entry.id ? { ...e, status: "done", photoId } : e,
+              ),
+            );
+            resolve();
+          } else {
+            setPhotos((prev) =>
+              prev.map((e) =>
+                e.id === entry.id
+                  ? { ...e, status: "error", error: payload.message ?? "آپلود عکس انجام نشد." }
+                  : e,
+              ),
+            );
+            reject(new Error(payload.message ?? "آپلود عکس انجام نشد."));
+          }
+        };
+        xhr.onerror = () => {
+          setPhotos((prev) =>
+            prev.map((e) =>
+              e.id === entry.id
+                ? { ...e, status: "error", error: "ارتباط با سرور قطع شد." }
+                : e,
+            ),
+          );
+          reject(new Error("ارتباط با سرور قطع شد."));
+        };
+        xhr.send(data);
+      });
+    } catch (error) {
+      setPhotos((prev) =>
+        prev.map((e) =>
+          e.id === entry.id
+            ? { ...e, status: "error", error: (error as Error).message ?? "خطا در پردازش عکس." }
+            : e,
+        ),
+      );
+    }
+  }
+
+  function removePhoto(id: number) {
+    setPhotos((prev) => {
+      const entry = prev.find((e) => e.id === id);
+      if (entry) revokePreview(entry.previewUrl);
+      return prev.filter((e) => e.id !== id);
+    });
+    setPhotoError("");
+  }
+
+  function retryPhoto(id: number) {
+    setPhotos((prev) => {
+      const entry = prev.find((e) => e.id === id);
+      if (!entry) return prev;
+      return prev.map((e) =>
+        e.id === id ? { ...e, status: "idle", percent: 0, error: "" } : e,
+      );
+    });
+    const entry = photos.find((e) => e.id === id);
+    if (entry) uploadPhoto(entry);
+  }
+
+  function startReplace(id: number) {
+    replacingId.current = id;
+    photoInputRef.current?.click();
+  }
+
+  function clearPhotos() {
+    for (const entry of photos) revokePreview(entry.previewUrl);
+    setPhotos([]);
+    setPhotoError("");
+    if (photoInputRef.current) photoInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  }
+
   function uploadWithProgress(selected: File) {
     setFileError("");
     setUploadedFile(null);
@@ -123,6 +373,18 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
           return;
         }
 
+        const uploadingPhotos = photos.some((p) => p.status === "uploading");
+        const failedPhotos = photos.some((p) => p.status === "error");
+        if (uploadingPhotos || failedPhotos) {
+          setPending(false);
+          setError(
+            uploadingPhotos
+              ? "عکس‌ها هنوز در حال آپلود هستند. چند لحظه صبر کنید."
+              : "کسی از عکس‌ها آپلود نشد. لطفاً دوباره انتخاب کنید.",
+          );
+          return;
+        }
+
         const result = await apiFetch("/api/books", {
           method: "POST",
           body: {
@@ -134,6 +396,7 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
                 : Number(form.price || 0),
             fileId: uploadedFile?.id ?? 0,
             fileUrl: fileLink.trim() || undefined,
+            photoIds: photos.map((p) => p.photoId).filter((id): id is number => Boolean(id)),
           },
         });
 
@@ -405,6 +668,131 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
           </Field>
         </div>
       )}
+
+      {/* ----------------------------------- عکس‌ها ----------------------------------- */}
+      <div className="card-surface space-y-4 p-5">
+        <div>
+          <p className="flex items-center gap-2 text-[13px] font-extrabold text-ink-900">
+            <Icon name="image" className="size-4.5 text-brand-600" />
+            عکس آگهی
+          </p>
+          <p className="mt-1 text-[11.5px] leading-6 text-ink-400">
+            حداکثر ۳ عکس. هر عکس روی مرورگر شما به‌صورت خودکار به حداکثر عرض
+            ۱۲۰۰px و کیفیت ۰٫۸ (WebP اگر پشتیبانی شود) فشرده می‌شود تا حدوداً
+            ۳۰۰ کیلوبایت شود؛ حداکثر حجم مجاز ۴ مگابایت است.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3 items-start">
+          <label
+            htmlFor="photo-gallery"
+            className="cursor-pointer flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink-100 bg-ink-50/40 px-3 py-6 text-center transition hover:border-brand-200 hover:bg-brand-50/30"
+          >
+            <span className="grid size-11 place-items-center rounded-2xl bg-white text-brand-600 shadow-sm">
+              <Icon name="image" className="size-5" />
+            </span>
+            <span className="text-[13px] font-bold text-ink-800">انتخاب از گالری</span>
+            <input
+              id="photo-gallery"
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(event) => addSelectedFiles(event.target.files)}
+            />
+          </label>
+
+          <label
+            htmlFor="photo-camera"
+            className="cursor-pointer flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink-100 bg-ink-50/40 px-3 py-6 text-center transition hover:border-brand-200 hover:bg-brand-50/30"
+          >
+            <span className="grid size-11 place-items-center rounded-2xl bg-white text-brand-600 shadow-sm">
+              <Icon name="camera" className="size-5" />
+            </span>
+            <span className="text-[13px] font-bold text-ink-800">گرفتن عکس</span>
+            <input
+              id="photo-camera"
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(event) => addSelectedFiles(event.target.files)}
+            />
+          </label>
+        </div>
+
+        {photos.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {photos.map((entry) => (
+              <div key={entry.id} className="flex flex-col items-center gap-2 w-40 group">
+                <div className="relative size-40 rounded-2xl overflow-hidden bg-ink-50 border border-ink-100">
+                  <img
+                    src={entry.previewUrl}
+                    alt=""
+                    className="size-40 object-cover"
+                    draggable={false}
+                  />
+                  {entry.status === "uploading" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-ink-100">
+                      <div
+                        className="h-full bg-gradient-to-l from-brand-600 to-brand-400"
+                        style={{ width: `${entry.percent}%` }}
+                      />
+                    </div>
+                  )}
+                  {entry.status === "done" && (
+                    <div className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-brand-600 text-white shadow-sm">
+                      <Icon name="check" className="size-3.5" />
+                    </div>
+                  )}
+                  {entry.status === "error" && (
+                    <div className="absolute right-1 top-1 grid size-6 place-items-center rounded-full bg-rose-500 text-white shadow-sm">
+                      <Icon name="alert" className="size-3.5" />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-[11px] text-ink-500 truncate" dir="auto">
+                  {entry.file.name}
+                </p>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    disabled={entry.status === "uploading"}
+                    onClick={() => startReplace(entry.id)}
+                    className={`flex-1 text-[11px] font-bold rounded-xl border border-ink-100 bg-white px-2 py-1.5 text-ink-600 transition hover:bg-brand-50 disabled:opacity-50 ${
+                      entry.status === "done" ? "border-brand-200 text-brand-700" : ""
+                    }`}
+                  >
+                    {entry.status === "uploading" ? "در حال آپلود…" : "انتخاب مجدد"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(entry.id)}
+                    className="text-[11px] font-bold rounded-xl border border-ink-100 bg-white px-2 py-1.5 text-ink-600 transition hover:bg-rose-50 hover:text-rose-600"
+                  >
+                    حذف
+                  </button>
+                </div>
+                {entry.status === "error" && entry.error && (
+                  <p className="mt-1 text-[10.5px] leading-5 text-rose-600 text-center">
+                    {entry.error}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {photos.length >= MAX_PHOTOS_PER_BOOK && (
+          <p className="text-[11px] text-ink-400 text-center">
+            حداکثر ۳ عکس برای هر آگهی مجاز است.
+          </p>
+        )}
+
+        {photoError && <Alert tone="error">{photoError}</Alert>}
+      </div>
 
       <div className="card-surface space-y-4 p-5">
         <Field label="آیکون آگهی">

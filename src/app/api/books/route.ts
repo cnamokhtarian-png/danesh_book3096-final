@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { books } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { attachFileToBook, saveExternalLink } from "@/lib/files";
+import { MAX_PHOTOS_PER_BOOK, attachPhotosToBook } from "@/lib/photos";
 import { CATEGORIES, CONDITIONS, KINDS, OFFER_TYPES, mediumOfKind } from "@/lib/constants";
 import { HttpError, jsonError, readJsonBody, str, toInt, withDb } from "@/lib/http";
 import { listBooks } from "@/lib/queries";
@@ -88,6 +89,18 @@ export async function POST(request: Request) {
     return jsonError("درخواست کتاب نیاز به قیمت ندارد.", 422);
   }
 
+  // عکس‌های آگهی (اختیاری): شناسه‌های عکس‌های آپلودشده که مالک کاربر هستند
+  // و هنوز به هیچ آگهی وصل نشده‌اند. حداکثر ۳ عکس برای هر آگهی.
+  const rawPhotoIds = Array.isArray(body.photoIds) ? body.photoIds : [];
+  const photoIds: number[] = [];
+  for (const raw of rawPhotoIds) {
+    const id = toInt(raw, 0);
+    if (id > 0 && !photoIds.includes(id)) photoIds.push(id);
+  }
+  if (photoIds.length > MAX_PHOTOS_PER_BOOK) {
+    return jsonError("حداکثر ۳ عکس برای هر آگهی مجاز است.", 422);
+  }
+
   // فایل آگهی (اختیاری): یا فایل آپلودشده (fileId) یا لینک منبع (fileUrl).
   const fileId = toInt(body.fileId, 0);
   const rawFileUrl = str(body.fileUrl, 500);
@@ -152,6 +165,16 @@ export async function POST(request: Request) {
         await attachFileToBook(link.id, created.id, user.id);
       } catch (error) {
         console.error("[daneshbook:books] external link failed:", (error as Error).message);
+      }
+    }
+
+    // اتصال عکس‌های آپلودشده به آگهی جدید.
+    if (photoIds.length > 0) {
+      const attachedCount = await attachPhotosToBook(photoIds, created.id, user.id);
+      if (attachedCount !== photoIds.length) {
+        console.warn(
+          `[daneshbook:books] ${photoIds.length - attachedCount} از ${photoIds.length} عکس به آگهی ${created.id} وصل نشد (مالکیت یا قبل از اتصال شده).`,
+        );
       }
     }
 

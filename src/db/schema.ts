@@ -157,6 +157,38 @@ export const bookFiles = pgTable(
   ],
 );
 
+/**
+ * عکس‌های آگهی — Store شده به‌صورت base64 در دیتابیس (همان lógica فایل‌ها).
+ *
+ * هر عکس تا وقتی آگهی ثبت نشده `bookId = null` دارد (آپلود قبل از ثبت
+ * آگهی انجام می‌شود) و هنگام ثبت آگهی به آگهی مالک وصل می‌شود.
+ * حداکثر ۳ عکس برای هر آگهی و سقف ۴ مگابایت برای هر عکس (بعد از
+ * فشرده‌سازی سمت کلاینت).
+ */
+export const bookPhotos = pgTable(
+  "bookPhotos",
+  {
+    id: serial("id").primaryKey(),
+    /** تا وقتی آگهی ثبت نشده null است. */
+    bookId: integer("bookId").references(() => books.id, { onDelete: "cascade" }),
+    ownerId: integer("ownerId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mimeType: varchar("mimeType", { length: 120 }).notNull().default("image/jpeg"),
+    sizeBytes: integer("sizeBytes").notNull().default(0),
+    /** محتوای عکس به‌صورت base64. */
+    data: text("data").notNull(),
+    width: integer("width").notNull().default(0),
+    height: integer("height").notNull().default(0),
+    sortOrder: integer("sortOrder").notNull().default(0),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("bookPhotos_bookId_idx").on(table.bookId),
+    index("bookPhotos_ownerId_idx").on(table.ownerId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   books: many(books),
   requests: many(requests),
@@ -165,12 +197,20 @@ export const usersRelations = relations(users, ({ many }) => ({
 export const booksRelations = relations(books, ({ one, many }) => ({
   owner: one(users, { fields: [books.ownerId], references: [users.id] }),
   requests: many(requests),
+  photos: many(bookPhotos),
+}));
+
+export const bookPhotosRelations = relations(bookPhotos, ({ one }) => ({
+  book: one(books, { fields: [bookPhotos.bookId], references: [books.id] }),
+  owner: one(users, { fields: [bookPhotos.ownerId], references: [users.id] }),
 }));
 
 export const requestsRelations = relations(requests, ({ one }) => ({
   book: one(books, { fields: [requests.bookId], references: [books.id] }),
   requester: one(users, { fields: [requests.userId], references: [users.id] }),
 }));
+
+/**
 
 /**
  * پیشنهادات و پیام‌های پشتیبانی — از فرم کاربران ذخیره می‌شود و در
@@ -224,4 +264,5 @@ export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Request = typeof requests.$inferSelect;
 export type BookFile = typeof bookFiles.$inferSelect;
+export type BookPhoto = typeof bookPhotos.$inferSelect;
 export type Suggestion = typeof suggestions.$inferSelect;

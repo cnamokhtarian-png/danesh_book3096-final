@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { formatPrice } from "@/lib/constants";
 
 /**
  * اشتراک‌گذاری — مهم‌ترین اهرم رشد دهان‌به‌دهان.
@@ -16,17 +17,27 @@ import { Icon } from "@/components/Icon";
  *  - "card"    → کارت کامل برای صفحه‌ی آگهی
  *  - "inline"  → ردیف فشرده برای معرفی سایت (خانه/داشبورد)
  *  - "icon"    → فقط آیکون، برای کنار دکمه‌های دیگر
+ *
+ * kind:
+ *  - "ad"  → متن تبلیغاتی آگهی (عنوان، قیمت، دانشگاه + لینک)
+ *  - "site"→ معرفی کل سایت (۲۰ کارما ثبت‌نام، تبادل کتاب، فایل PDF/پاورپوینت رایگان)
  */
 export default function ShareButton({
   title,
   path = "/",
   variant = "card",
   description,
+  kind = "ad",
+  price,
+  university,
 }: {
   title: string;
   path?: string;
   variant?: "card" | "inline" | "icon";
   description?: string;
+  kind?: "ad" | "site";
+  price?: number | null;
+  university?: string | null;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -42,32 +53,45 @@ export default function ShareButton({
     return new URL(path, window.location.origin).toString();
   }
 
-  async function copyLink() {
+  const url = absoluteUrl();
+
+  const priceText =
+    price != null && price > 0 ? formatPrice(price, "sell") : "رایگان";
+  const universityText = university || "ثبت نشده";
+
+  /** متن تبلیغاتی آگهی: عنوان، قیمت، دانشگاه و لینک. */
+  const adText = `${title}\nقیمت: ${priceText}\nدانشگاه: ${universityText}\n${url}`;
+
+  /** معرفی کل سایت: کارما ثبت‌نام، تبادل کتاب، فایل رایگان PDF و پاورپوینت. */
+  const siteText = `دانش‌بوک — تبادل کتاب و دانلود رایگان جزوه و پاورپوینت\nثبت‌نام کنید و ۲۰ کارما هدیه بگیرید، کتاب و جزوه تبادل کنید و فایل‌های PDF و پاورپوینت رایگان دانلود کنید.\n${url}`;
+
+  /** متن نهایی که همراه با لینک کپی/ارسال می‌شود. */
+  const shareText = kind === "site" ? siteText : adText;
+
+  async function copyText() {
     try {
-      await navigator.clipboard.writeText(absoluteUrl());
+      await navigator.clipboard.writeText(shareText);
       setCopied(true);
     } catch {
       // مرورگر بدون دسترسی کلیپ‌بورد: انتخاب دستی به کاربر پیشنهاد می‌شود.
-      window.prompt("لینک را کپی کنید:", absoluteUrl());
+      window.prompt("متن و لینک را کپی کنید:", shareText);
     }
   }
 
   async function share() {
-    const url = absoluteUrl();
     if (navigator.share) {
       try {
-        await navigator.share({ title: message, text: message, url });
+        await navigator.share({ title: message, text: shareText, url });
         return;
       } catch {
         /* کاربر انصراف داد — سراغ کپی می‌رویم */
       }
     }
-    await copyLink();
+    await copyText();
   }
 
   function openMessenger(base: string) {
-    const url = absoluteUrl();
-    const target = base.replace("{text}", encodeURIComponent(`${message}\n${url}`));
+    const target = base.replace("{text}", encodeURIComponent(shareText));
     window.open(target, "_blank", "noopener,noreferrer");
   }
 
@@ -98,8 +122,7 @@ export default function ShareButton({
     return (
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={share} className={primaryBtn}>
-          <Icon name="send" className="size-4" />
-          اشتراک‌گذاری
+          <Icon name="send" className="size-4" /> اشتراک‌گذاری
         </button>
         <button
           type="button"
@@ -115,9 +138,9 @@ export default function ShareButton({
         >
           واتساپ
         </button>
-        <button type="button" onClick={copyLink} className={copyBtn}>
+        <button type="button" onClick={copyText} className={copyBtn}>
           <Icon name={copied ? "check" : "note"} className="size-4" />
-          {copied ? "کپی شد" : "کپی لینک"}
+          {copied ? "متن و لینک کپی شد" : "کپی لینک"}
         </button>
       </div>
     );
@@ -136,8 +159,7 @@ export default function ShareButton({
 
       <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={share} className={`col-span-2 ${primaryBtn}`}>
-          <Icon name="send" className="size-4" />
-          اشتراک‌گذاری آگهی
+          <Icon name="send" className="size-4" /> اشتراک‌گذاری آگهی
         </button>
 
         <button
@@ -156,9 +178,9 @@ export default function ShareButton({
           واتساپ
         </button>
 
-        <button type="button" onClick={copyLink} className={`col-span-2 ${copyBtn}`}>
+        <button type="button" onClick={copyText} className={`col-span-2 ${copyBtn}`}>
           <Icon name={copied ? "check" : "note"} className="size-4" />
-          {copied ? "لینک کپی شد" : "کپی لینک"}
+          {copied ? "متن و لینک کپی شد" : "کپی لینک"}
         </button>
       </div>
     </div>

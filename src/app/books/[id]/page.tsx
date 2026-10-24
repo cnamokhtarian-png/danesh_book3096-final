@@ -10,13 +10,16 @@ import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { getBookFile } from "@/lib/files";
+import { getBookPhotos } from "@/lib/photos";
 import {
   categoryEmoji,
   categoryLabel,
   conditionLabel,
+  coverGradient,
   faNumber,
   formatDate,
   formatPrice,
+  kindEmoji,
   kindLabel,
   mediumLabel,
   offerEmoji,
@@ -100,9 +103,10 @@ export default async function BookDetailPage({ params }: PageProps) {
   const [book, user] = await Promise.all([getBookById(id), getCurrentUser()]);
   if (!book) notFound();
 
-  const [related, file] = await Promise.all([
+  const [related, file, photos] = await Promise.all([
     listRelatedBooks(book.id, book.category, 4),
     getBookFile(book.id),
+    getBookPhotos(id),
   ]);
 
   const isOwner = user?.id === book.ownerId;
@@ -177,10 +181,34 @@ export default async function BookDetailPage({ params }: PageProps) {
       <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
         {/* --------------------------- main card --------------------------- */}
         <article className="card-surface overflow-hidden">
+          {/* ------------------- گالری عکس / کاور پیش‌فرض ------------------- */}
+          <div className="border-b border-ink-100 bg-gradient-to-bl from-brand-50/80 via-white to-accent-400/10">
+            {photos.length > 0 ? (
+              <div className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3 lg:p-6">
+                {photos.map((photo) => (
+                  <a
+                    key={photo.id}
+                    href={`/api/photos/${photo.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block aspect-[4/3] rounded-xl overflow-hidden bg-ink-50"
+                  >
+                    <img
+                      src={`/api/photos/${photo.id}`}
+                      alt=""
+                      className="size-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <DefaultCover kind={book.kind} category={book.category} />
+            )}
+          </div>
+
           <div className="relative flex flex-wrap items-center gap-5 border-b border-ink-100 bg-gradient-to-bl from-brand-50/80 via-white to-accent-400/10 p-6">
-            <span className="grid size-24 place-items-center rounded-3xl bg-white text-5xl shadow-lg shadow-brand-900/10">
-              {book.coverEmoji}
-            </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={book.kind === "note" ? "amber" : "brand"}>
@@ -277,7 +305,13 @@ export default async function BookDetailPage({ params }: PageProps) {
             isOwner={isOwner}
           />
 
-          <ShareButton title={book.title} path={`/books/${book.id}`} />
+          <ShareButton
+            title={book.title}
+            path={`/books/${book.id}`}
+            kind="ad"
+            price={book.price}
+            university={book.university}
+          />
         </aside>
       </div>
 
@@ -302,6 +336,22 @@ export default async function BookDetailPage({ params }: PageProps) {
           <BookCardGrid books={related} />
         </section>
       )}
+    </div>
+  );
+}
+
+/**
+ * کاور پیش‌فرض زیبا وقتی آگهی عکس ندارد — بر اساس دسته‌بندی و نوع محتوا
+ * (کتاب / جزوه / اسلاید / نمونه سوال) رنگ‌بندی می‌شود.
+ */
+function DefaultCover({ kind, category }: { kind: string; category: string }) {
+  return (
+    <div className={`h-64 lg:h-80 rounded-2xl bg-gradient-to-bl ${coverGradient(category)} text-white flex flex-col items-center justify-center gap-2 p-6 shadow-lg shadow-ink-900/10`}>
+      <span className="text-6xl">{kindEmoji(kind)}</span>
+      <span className="text-base font-bold">{kindLabel(kind)}</span>
+      <span className="text-[12px] opacity-90">
+        {categoryEmoji(category)} {categoryLabel(category)}
+      </span>
     </div>
   );
 }

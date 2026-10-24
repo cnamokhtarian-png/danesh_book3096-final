@@ -25,7 +25,7 @@ export default async function AdminPage() {
         <EmptyState
           icon="shield"
           title="دسترسی محدود"
-          description="این بخش فقط برای مدیر سایت در دسترس است. اگر فکر می‌کنید خطایی رخ داده، با پشتیبانی تماس بگیرید."
+          description="این حساب ادمین نیست. نقش را به admin تغییر دهید: اسکریپت db:set-admin را اجرا کنید یا مستقیماً در SQL ستون role را برابر admin قرار دهید."
           actionLabel="بازگشت به داشبورد"
           actionHref="/dashboard"
         />
