@@ -1,7 +1,7 @@
 /**
  * ساخت یا ارتقای حساب مدیر — بدون نیاز به پنل و بدون اجرای seed.
  *
- *   ADMIN_USERNAME=Sins1996 ADMIN_PASSWORD='Sina3096' npm run db:set-admin
+ *   ADMIN_USERNAME='<نام-کاربری-مدیر>' ADMIN_PASSWORD='<رمز-قوی-مدیر>' npm run db:set-admin
  *
  * ورودی‌ها:
  *   ADMIN_USERNAME  (الزامی) شناسه ورود؛ اگر ایمیل نباشد، با پیشوند پیش‌فرض

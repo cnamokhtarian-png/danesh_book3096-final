@@ -41,8 +41,11 @@ npm run dev
 ## ساخت حساب مدیر
 
 ```bash
-DATABASE_URL='postgresql://…' ADMIN_USERNAME='Sins1996' ADMIN_PASSWORD='Sina3096' npm run db:set-admin
+DATABASE_URL='postgresql://…' ADMIN_USERNAME='<نام-کاربری-مدیر>' ADMIN_PASSWORD='<رمز-قوی-مدیر>' npm run db:set-admin
 ```
+
+> نام کاربری و رمز مدیر عمداً در این فایل‌ها نوشته نمی‌شوند. آن‌ها را در
+> `.env` یا مدیر رمز عبور نگه دارید.
 
 اسکریپت فقط با جدول `users` کار می‌کند (insert/update روی همان ایمیل) و به هیچ جدول یا ستون دیگری دست نمی‌زند. پس از اجرا هم می‌توان با نام کاربری و هم با ایمیل کامل وارد شد.
 

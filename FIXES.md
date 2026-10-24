@@ -51,7 +51,7 @@
 ## ۵. حساب مدیر
 
 ```bash
-DATABASE_URL='postgresql://…' ADMIN_USERNAME='Sins1996' ADMIN_PASSWORD='Sina3096' npm run db:set-admin
+DATABASE_URL='postgresql://…' ADMIN_USERNAME='<نام-کاربری-مدیر>' ADMIN_PASSWORD='<رمز-قوی-مدیر>' npm run db:set-admin
 ```
 
 - نام کاربری `Sins1996` (بدون `@`) و ایمیل `sins1996@daneshbook.local` هر دو برای ورود کار می‌کنند.
@@ -72,7 +72,7 @@ pg_dump "$DATABASE_URL" --schema-only > schema-backup.sql
 
 # ۲) کد جدید را deploy کنید — دیتابیس فعلی بدون تغییر کار می‌کند
 # ۳) حساب مدیر را بسازید
-DATABASE_URL='postgresql://…' ADMIN_USERNAME=Sins1996 ADMIN_PASSWORD='Sina3096' npm run db:set-admin
+DATABASE_URL='postgresql://…' ADMIN_USERNAME='<نام-کاربری-مدیر>' ADMIN_PASSWORD='<رمز-قوی-مدیر>' npm run db:set-admin
 
 # ۴) بررسی سلامت و ورود
 curl -s https://<دامنه>/api/health   # {"ok":true,"configured":true}
