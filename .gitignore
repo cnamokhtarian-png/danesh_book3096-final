@@ -1,0 +1,36 @@
+# وابستگی‌ها
+node_modules/
+.pnp
+.pnp.js
+
+# خروجی Next.js
+.next/
+out/
+build/
+dist/
+next-env.d.ts
+*.tsbuildinfo
+
+# متغیرهای محیطی — هرگز کامیت نشوند
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# لاگ‌ها و فایل‌های موقت
+*.log
+npm-debug.log*
+yarn-error.log*
+coverage/
+.tmp/
+tmp/
+
+# سیستم‌عامل و ادیتور
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Vercel
+.vercel

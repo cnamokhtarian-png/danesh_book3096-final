@@ -120,6 +120,43 @@ export const requests = pgTable(
   ],
 );
 
+/**
+ * فایل آگهی‌های دیجیتال (PDF، پاورپوینت، نمونه سوال...).
+ *
+ * دو حالت دارد:
+ *  - storage = "upload": خود فایل در ستون `data` به‌صورت base64 نگه داشته می‌شود
+ *    (روی Vercel فایل‌سیستم ماندگار نیست، پس دیتابیس تنها جای قابل‌اتکاست).
+ *  - storage = "link": فقط نشانی منبع (`externalUrl`) ذخیره می‌شود؛ مناسب وقتی
+ *    صاحب آگهی فایل را جای دیگری میزبانی می‌کند.
+ *
+ * جدول جدید و افزایشی است؛ هیچ ستونی از جدول‌های موجود تغییر نمی‌کند.
+ */
+export const bookFiles = pgTable(
+  "bookFiles",
+  {
+    id: serial("id").primaryKey(),
+    /** تا وقتی آگهی ثبت نشده null است (آپلود قبل از ثبت آگهی انجام می‌شود). */
+    bookId: integer("bookId").references(() => books.id, { onDelete: "cascade" }),
+    ownerId: integer("ownerId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    fileName: varchar("fileName", { length: 180 }).notNull(),
+    mimeType: varchar("mimeType", { length: 120 }).notNull().default("application/octet-stream"),
+    sizeBytes: integer("sizeBytes").notNull().default(0),
+    /** "upload" | "link" */
+    storage: varchar("storage", { length: 12 }).notNull().default("upload"),
+    /** محتوای فایل به‌صورت base64 (فقط برای storage = "upload") */
+    data: text("data"),
+    externalUrl: text("externalUrl"),
+    downloadCount: integer("downloadCount").notNull().default(0),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("bookFiles_bookId_idx").on(table.bookId),
+    index("bookFiles_ownerId_idx").on(table.ownerId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   books: many(books),
   requests: many(requests),
@@ -156,7 +193,35 @@ export const suggestions = pgTable(
   (table) => [index("suggestions_createdAt_idx").on(table.createdAt)],
 );
 
+/**
+ * توکن‌های بازیابی رمز عبور.
+ *
+ * فقط هش SHA-256 توکن ذخیره می‌شود، نه خود توکن؛ بنابراین لو رفتن دیتابیس
+ * امکان بازنشانی رمز حساب‌های دیگر را نمی‌دهد. هر ردیف یک‌بارمصرف است
+ * (`usedAt`) و تاریخ انقضا دارد.
+ *
+ * این جدول جدید و افزایشی است؛ ساختنش هیچ جدول یا ستونی را تغییر نمی‌دهد.
+ */
+export const passwordResets = pgTable(
+  "passwordResets",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
+    usedAt: timestamp("usedAt", { withTimezone: true }),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("passwordResets_tokenHash_unique").on(table.tokenHash),
+    index("passwordResets_userId_idx").on(table.userId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Request = typeof requests.$inferSelect;
+export type BookFile = typeof bookFiles.$inferSelect;
 export type Suggestion = typeof suggestions.$inferSelect;

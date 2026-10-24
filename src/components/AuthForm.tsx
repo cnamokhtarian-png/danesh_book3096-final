@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
+import PasswordInput from "@/components/PasswordInput";
 import { Alert, Field } from "@/components/ui";
 import { apiFetch } from "@/lib/api-client";
 import { UNIVERSITIES } from "@/lib/constants";
@@ -22,6 +23,9 @@ export default function AuthForm({ mode, next }: { mode: Mode; next?: string }) 
     university: "",
     major: "",
   });
+
+  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const update = (key: keyof typeof form) => (event: { target: { value: string } }) =>
     setForm((prev) => ({ ...prev, [key]: event.target.value }));
@@ -99,23 +103,13 @@ export default function AuthForm({ mode, next }: { mode: Mode; next?: string }) 
         </div>
       </Field>
 
-      <Field label="رمز عبور" hint={isRegister ? "حداقل ۶ کاراکتر" : undefined}>
-        <div className="relative">
-          <Icon
-            name="lock"
-            className="pointer-events-none absolute inset-y-0 right-3.5 my-auto size-4.5 text-ink-400"
-          />
-          <input
-            type="password"
-            dir="ltr"
-            value={form.password}
-            onChange={update("password")}
-            className="field-base pr-11 text-left"
-            placeholder="••••••••"
-            autoComplete={isRegister ? "new-password" : "current-password"}
-            required
-          />
-        </div>
+      <Field label="رمز عبور" hint={isRegister ? "حداقل ۸ کاراکتر" : undefined}>
+        <PasswordInput
+          value={form.password}
+          onChange={(value) => set("password", value)}
+          autoComplete={isRegister ? "new-password" : "current-password"}
+          required
+        />
       </Field>
 
       {isRegister && (

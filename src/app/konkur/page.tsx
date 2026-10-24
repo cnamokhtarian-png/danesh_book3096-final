@@ -8,8 +8,15 @@ import { getStats, listBooks } from "@/lib/queries";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "هاب ویژه کنکور | دانش‌بوک",
-  description: "بخش اختصاصی کنکوری‌ها: منابع، جزوات، تست‌ها و نمونه سوالات کنکور.",
+  title: "هاب ویژه کنکور — منابع، جزوه و بانک تست",
+  description:
+    "بخش اختصاصی داوطلبان کنکور: کتاب کمک‌درسی، جزوه‌های جمع‌بندی، بانک تست و نمونه سوال سال‌های گذشته با امکان تبادل و واگذاری رایگان.",
+  alternates: { canonical: "/konkur" },
+  openGraph: {
+    title: "هاب ویژه کنکور | دانش‌بوک",
+    description: "منابع، جزوات جمع‌بندی، بانک تست و نمونه سوال کنکور.",
+    url: "/konkur",
+  },
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

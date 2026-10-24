@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BookCardGrid } from "@/components/BookCard";
+import FileCard from "@/components/FileCard";
 import { Icon } from "@/components/Icon";
+import JsonLd from "@/components/JsonLd";
 import RequestForm from "@/components/RequestForm";
+import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
+import { getBookFile } from "@/lib/files";
 import {
   categoryEmoji,
   categoryLabel,
@@ -16,16 +22,75 @@ import {
   offerEmoji,
   offerLabel,
 } from "@/lib/constants";
-import { bumpViews, getBookById } from "@/lib/queries";
+import { bumpViews, getBookById, listRelatedBooks } from "@/lib/queries";
+import { SITE, absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 type PageProps = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: PageProps) {
+/**
+ * متادیتای هر آگهی بر اساس محتوای واقعی آن ساخته می‌شود: عنوان، توضیح،
+ * canonical و تصویر اشتراک‌گذاری. آگهی‌های مبادله‌شده noindex می‌شوند تا
+ * صفحات نازک/بی‌ارزش وارد ایندکس نشوند.
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const id = Number.parseInt((await params).id, 10);
   const book = Number.isFinite(id) ? await getBookById(id) : null;
-  return { title: book ? `${book.title} | دانش‌بوک` : "آگهی پیدا نشد | دانش‌بوک" };
+
+  // آگهی ناموجود: هم در متادیتا و هم در بدنه notFound می‌شود. Next روی
+  // صفحه‌های not-found به‌صورت خودکار noindex می‌گذارد، بنابراین آدرس‌های
+  // نامعتبر وارد ایندکس گوگل نمی‌شوند (چون loading.tsx استریم را شروع
+  // می‌کند، کد وضعیت 200 می‌ماند و به همین تگ noindex تکیه می‌کنیم).
+  if (!book) notFound();
+
+  const price =
+    book.offerType === "free"
+      ? "واگذاری رایگان"
+      : book.offerType === "request"
+        ? "درخواست کتاب"
+        : book.price
+          ? `${book.price.toLocaleString("fa-IR")} تومان`
+          : "رایگان";
+
+  const description = [
+    book.title,
+    kindLabel(book.kind),
+    book.course ? `درس ${book.course}` : null,
+    book.author ? `نویسنده ${book.author}` : null,
+    book.university,
+    `${offerLabel(book.offerType)} — ${price}`,
+    book.description?.slice(0, 90),
+  ]
+    .filter(Boolean)
+    .join(" · ")
+    .slice(0, 300);
+
+  const isAvailable = book.status === "available";
+
+  return {
+    title: book.title,
+    description,
+    alternates: { canonical: `/books/${book.id}` },
+    robots: isAvailable
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
+    openGraph: {
+      type: "article",
+      title: book.title,
+      description,
+      url: `/books/${book.id}`,
+      siteName: SITE.name,
+      locale: SITE.locale,
+      images: [{ url: SITE.ogImage, width: 1200, height: 630, alt: book.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: book.title,
+      description,
+      images: [SITE.ogImage],
+    },
+  };
 }
 
 export default async function BookDetailPage({ params }: PageProps) {
@@ -35,9 +100,15 @@ export default async function BookDetailPage({ params }: PageProps) {
   const [book, user] = await Promise.all([getBookById(id), getCurrentUser()]);
   if (!book) notFound();
 
-  await bumpViews(book.id);
+  const [related, file] = await Promise.all([
+    listRelatedBooks(book.id, book.category, 4),
+    getBookFile(book.id),
+  ]);
 
   const isOwner = user?.id === book.ownerId;
+
+  // بازدید صاحب آگهی و ربات‌های خزش شمارنده را بالا نمی‌برند.
+  if (!isOwner) await bumpViews(book.id);
 
   const meta = [
     { label: "بازار", value: mediumLabel(book.medium), icon: "presentation" as const },
@@ -54,8 +125,47 @@ export default async function BookDetailPage({ params }: PageProps) {
     { label: "تاریخ انتشار", value: formatDate(book.createdAt), icon: "clock" as const },
   ];
 
+  // داده ساختاریافته: آگهی + مسیر راهنما. گوگل با این اطلاعات نتایج غنی‌تری
+  // (قیمت، موجود بودن، breadcrumb) نشان می‌دهد.
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: book.title,
+    description: book.description ?? `${kindLabel(book.kind)} — ${book.course ?? ""}`,
+    category: categoryLabel(book.category),
+    brand: book.author ? { "@type": "Brand", name: book.author } : undefined,
+    offers: {
+      "@type": "Offer",
+      price: book.price,
+      priceCurrency: "IRR",
+      availability:
+        book.status === "available"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/SoldOut",
+      url: absoluteUrl(`/books/${book.id}`),
+      seller: { "@type": "Person", name: book.ownerName },
+    },
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "خانه", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "بازار کتاب", item: absoluteUrl("/books") },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: book.title,
+        item: absoluteUrl(`/books/${book.id}`),
+      },
+    ],
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <JsonLd data={[productSchema, breadcrumbSchema]} />
+
       <Link
         href="/books"
         className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-400 transition hover:text-brand-600"
@@ -157,6 +267,8 @@ export default async function BookDetailPage({ params }: PageProps) {
             </p>
           </div>
 
+          {file && <FileCard file={file} />}
+
           <RequestForm
             bookId={book.id}
             bookTitle={book.title}
@@ -164,8 +276,32 @@ export default async function BookDetailPage({ params }: PageProps) {
             isLoggedIn={Boolean(user)}
             isOwner={isOwner}
           />
+
+          <ShareButton title={book.title} path={`/books/${book.id}`} />
         </aside>
       </div>
+
+      {/* لینک‌سازی داخلی: آگهی‌های هم‌دسته برای کاربر و خزنده */}
+      {related.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-extrabold text-ink-900">
+              <span className="grid size-8 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                <Icon name="books" className="size-4.5" />
+              </span>
+              آگهی‌های مشابه در {categoryLabel(book.category)}
+            </h2>
+            <Link
+              href={`/books?category=${book.category}`}
+              className="flex items-center gap-1 text-[12.5px] font-bold text-brand-600 transition hover:text-brand-700"
+            >
+              همه
+              <Icon name="back" className="size-3.5" />
+            </Link>
+          </div>
+          <BookCardGrid books={related} />
+        </section>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import AuthForm from "@/components/AuthForm";
 import { Icon } from "@/components/Icon";
@@ -5,7 +6,10 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "ورود | دانش‌بوک" };
+export const metadata = {
+  title: "ورود",
+  robots: { index: false, follow: false },
+};
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -57,13 +61,25 @@ export default async function LoginPage({ searchParams }: Props) {
         </p>
         <AuthForm mode="login" next={nextParam} />
 
-        <div className="mt-6 rounded-2xl border border-dashed border-brand-200 bg-brand-50/60 px-4 py-3.5 text-[12.5px] leading-7 text-brand-800">
-          <span className="font-extrabold">حساب نمونه برای تست سریع:</span>
-          <span dir="ltr" className="mx-1 font-bold">
-            sara@daneshbook.ir
-          </span>
-          / <span dir="ltr" className="font-bold">123456</span>
+        <div className="mt-3 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-[12.5px] font-bold text-brand-600 transition hover:text-brand-700 hover:underline"
+          >
+            رمز عبور را فراموش کرده‌اید؟
+          </Link>
         </div>
+
+        {/* فقط در محیط توسعه نمایش داده می‌شود؛ در تولید این بلوک حذف است. */}
+        {process.env.NODE_ENV !== "production" && (
+          <div className="mt-6 rounded-2xl border border-dashed border-brand-200 bg-brand-50/60 px-4 py-3.5 text-[12.5px] leading-7 text-brand-800">
+            <span className="font-extrabold">حساب نمونه برای تست محلی:</span>
+            <span dir="ltr" className="mx-1 font-bold">
+              sara@daneshbook.ir
+            </span>
+            / <span dir="ltr" className="font-bold">123456</span>
+          </div>
+        )}
       </section>
     </div>
   );

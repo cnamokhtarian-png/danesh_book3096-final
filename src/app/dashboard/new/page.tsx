@@ -6,7 +6,10 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "ثبت آگهی جدید | دانش‌بوک" };
+export const metadata = {
+  title: "ثبت آگهی جدید",
+  robots: { index: false, follow: false },
+};
 
 export default async function NewBookPage() {
   const user = await getCurrentUser();

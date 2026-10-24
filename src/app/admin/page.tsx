@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import SeedDemoButton from "@/components/SeedDemoButton";
 import SuggestionManager from "@/components/SuggestionManager";
 import { Icon } from "@/components/Icon";
 import { Badge, EmptyState, StatTile } from "@/components/ui";
 import { getCurrentUser, isAdminUser } from "@/lib/auth";
 import { faNumber, formatDate, MANAGEMENT_EMAIL } from "@/lib/constants";
+import { demoContentStatus } from "@/lib/demo-content";
 import { getStats, listSuggestions, listUsersForAdmin } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "پنل مدیریت | دانش‌بوک" };
+export const metadata = {
+  title: "پنل مدیریت",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminPage() {
   const user = await getCurrentUser();
@@ -28,10 +33,11 @@ export default async function AdminPage() {
     );
   }
 
-  const [stats, suggestions, users] = await Promise.all([
+  const [stats, suggestions, users, demo] = await Promise.all([
     getStats(),
     listSuggestions(),
     listUsersForAdmin(),
+    demoContentStatus(),
   ]);
 
   return (
@@ -88,6 +94,8 @@ export default async function AdminPage() {
           tone="amber"
         />
       </section>
+
+      <SeedDemoButton demoUsers={demo.users} />
 
       <SuggestionManager items={suggestions} />
 
