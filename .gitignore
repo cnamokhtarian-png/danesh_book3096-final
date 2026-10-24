@@ -34,3 +34,6 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# بسته‌ی دانلود (خروجی ساخت، در گیت نگه داشته نمی‌شود)
+trading-bot.zip

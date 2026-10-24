@@ -166,6 +166,9 @@ DATABASE_URL='postgresql://…' SITE_URL='https://your-domain.com' npm run reset
 
 ## بخش جدید: ربات معامله‌گر کریپتو (`trading-bot/`)
 
+📦 **دانلود آماده:** [`trading-bot.zip`](./trading-bot.zip) — کل پوشه‌ی ربات در یک فایل (۹۲ کیلوبایت).
+بعد از دانلود: از zip خارج کنید و `start.bat` (ویندوز) یا `bash start.sh` (مک/لینوکس) را اجرا کنید.
+
 یک ربات پایتونِ مستقل با مدیریت ریسک برای نوبیتکس/والکس (پیش‌فرض: حالت کاغذی،
 بدون هیچ سفارش واقعی). راهنما: [`trading-bot/README.md`](./trading-bot/README.md).
 
