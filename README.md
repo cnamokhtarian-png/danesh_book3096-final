@@ -163,3 +163,18 @@ DATABASE_URL='postgresql://…' SITE_URL='https://your-domain.com' npm run reset
 - فونت‌ها خودمیزبان در `public/fonts` (بدون درخواست به Google Fonts).
 
 گزارش کامل بررسی فنی و فهرست اصلاحات: [`REVIEW.md`](./REVIEW.md) و [`FIXES.md`](./FIXES.md).
+
+## بخش جدید: ربات معامله‌گر کریپتو (`trading-bot/`)
+
+یک ربات پایتونِ مستقل با مدیریت ریسک برای نوبیتکس/والکس (پیش‌فرض: حالت کاغذی،
+بدون هیچ سفارش واقعی). راهنما: [`trading-bot/README.md`](./trading-bot/README.md).
+
+```bash
+cd trading-bot
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # کلیدها فقط اینجا
+python scripts/demo_offline.py # دموی بدون اینترنت
+python -m trader check
+python -m trader once
+```

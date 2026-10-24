@@ -1,0 +1,4 @@
+# وابستگی‌های اجرای ربات
+requests>=2.31,<3
+
+# فقط برای تست‌ها (نصب: pip install -r requirements-dev.txt)

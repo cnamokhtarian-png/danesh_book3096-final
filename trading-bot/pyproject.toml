@@ -1,0 +1,20 @@
+[project]
+name = "danesh-trader"
+version = "0.1.0"
+description = "ربات معامله‌گر کریپتو با مدیریت ریسک (نوبیتکس / والکس) — پیش‌فرض حالت کاغذی"
+requires-python = ">=3.10"
+dependencies = ["requests>=2.31,<3"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["state", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

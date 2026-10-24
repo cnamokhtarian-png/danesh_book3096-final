@@ -1,0 +1,26 @@
+[Unit]
+Description=Danesh Trader — crypto trading bot (paper by default)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# کاربرِ غیر rootِ مخصوص ربات بسازید: adduser --system --group trader
+User=trader
+Group=trader
+WorkingDirectory=/opt/danesh-trader
+Environment=PYTHONUNBUFFERED=1
+# فایل .env در همین مسیر قرار می‌گیرد و مجوز 600 دارد
+ExecStart=/opt/danesh-trader/.venv/bin/python -m trader run
+Restart=on-failure
+RestartSec=15
+# محدودیت‌های امنیتی
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/danesh-trader/state
+EnvironmentFile=-/opt/danesh-trader/.env
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,22 @@
+# کلیدها و رمزها
+.env
+.env.*
+!.env.example
+
+# وضعیت و لاگ ربات (شامل تاریخچه‌ی معاملات و موجودی)
+state/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.log
+
+# پایتون
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
