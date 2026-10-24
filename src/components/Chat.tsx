@@ -60,9 +60,11 @@ export function ChatLauncher({
       <button
         type="button"
         onClick={startChat}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-brand-600 to-brand-500 px-4 py-3 text-[13px] font-extrabold text-white shadow-lg shadow-brand-500/20 transition hover:-translate-y-0.5 hover:shadow-brand-500/30"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-emerald-600 to-green-500 px-4 py-3 text-[13px] font-extrabold text-white shadow-lg shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:from-emerald-700 hover:to-green-600 hover:shadow-emerald-500/35"
       >
-        <Icon name="message" className="size-4.5" />
+        <span className="grid size-7 place-items-center rounded-full bg-white/15">
+          <Icon name="message" className="size-4.5" />
+        </span>
         گفتگو با آگهی‌دهنده
       </button>
       {open && (
