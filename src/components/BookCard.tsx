@@ -14,10 +14,34 @@ import {
 } from "@/lib/constants";
 import type { BookCardData } from "@/lib/queries";
 
-export function BookCard({ book }: { book: BookCardData }) {
+export type BookCardProps = {
+  book: BookCardData;
+  /** آدرس اولین عکس آگهی (اگر باشد، به‌جای ایموجی نمایش داده می‌شود). */
+  photoUrl?: string;
+};
+
+export function BookCard({ book, photoUrl }: BookCardProps) {
   const isDigital = book.medium === "digital";
   const isKonkur = book.audience === "konkur";
   const isRequest = book.offerType === "request";
+
+  const cover = photoUrl ? (
+    <img
+      src={photoUrl}
+      alt=""
+      className="size-14 shrink-0 rounded-2xl object-cover"
+      loading="lazy"
+      decoding="async"
+    />
+  ) : (
+    <span
+      className={`grid size-14 shrink-0 place-items-center rounded-2xl text-2xl ${
+        isDigital ? "bg-cyan-50" : isKonkur ? "bg-[#f3ecff]" : "bg-brand-50"
+      }`}
+    >
+      {book.coverEmoji || kindEmoji(book.kind)}
+    </span>
+  );
 
   return (
     <Link
@@ -25,13 +49,7 @@ export function BookCard({ book }: { book: BookCardData }) {
       className="group card-surface relative flex flex-col overflow-hidden p-4 transition duration-300 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgb(20_22_42/0.04),0_26px_50px_-28px_rgb(91_77_224/0.45)]"
     >
       <div className="flex items-start gap-3">
-        <span
-          className={`grid size-14 shrink-0 place-items-center rounded-2xl text-2xl ${
-            isDigital ? "bg-cyan-50" : isKonkur ? "bg-[#f3ecff]" : "bg-brand-50"
-          }`}
-        >
-          {book.coverEmoji || kindEmoji(book.kind)}
-        </span>
+        {cover}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span

@@ -389,7 +389,7 @@ export default async function HomePage() {
             برای همه بیشتر می‌کند. لینک سایت را در گروه کلاسی‌ات بفرست.
           </p>
         </div>
-        <ShareButton title="دانش‌بوک؛ بازار کتاب و جزوه‌ی دانشجویی" path="/" variant="inline" />
+        <ShareButton title="دانش‌بوک؛ کتاب و جزوه" path="/" variant="inline" kind="site" />
       </section>
     </div>
   );

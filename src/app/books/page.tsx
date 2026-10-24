@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookCardGrid } from "@/components/BookCard";
+import { BookCard } from "@/components/BookCard";
 import JsonLd from "@/components/JsonLd";
+import { getBookPhotosMap } from "@/lib/photos";
 import { Icon } from "@/components/Icon";
 import { EmptyState } from "@/components/ui";
 import { CATEGORIES, faNumber, KINDS, OFFER_TYPES } from "@/lib/constants";
@@ -196,6 +197,8 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
     sort,
     limit: 48,
   });
+
+  const photosMap = await getBookPhotosMap(books.map((book) => book.id));
 
   const kindLabel = KINDS.find((item) => item.value === kind)?.label;
   const offerLabel = OFFER_TYPES.find((item) => item.value === offerType)?.label;
@@ -426,7 +429,18 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
 
       {/* -------------------------------- results ------------------------------- */}
       {books.length ? (
-        <BookCardGrid books={books} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {books.map((book) => {
+            const firstPhoto = photosMap.get(book.id)?.[0];
+            return (
+              <BookCard
+                key={book.id}
+                book={book}
+                photoUrl={firstPhoto ? `/api/photos/${firstPhoto.id}` : undefined}
+              />
+            );
+          })}
+        </div>
       ) : (
         <EmptyState
           icon="search"
