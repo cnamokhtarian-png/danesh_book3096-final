@@ -45,35 +45,32 @@ function buildHref(
 
 /* ------------------------------ small parts ------------------------------ */
 
-/** دکمه سگمنتی (کنترل بازاری/مرتب‌سازی) — حالت فعال با گرادیان و سایه. */
+/** دکمه سگمنتی (بازار/مرتب‌سازی) — حالت فعال روشن و برجسته، بقیه آرام. */
 function Segment({
   href,
   active,
   children,
-  icon,
 }: {
   href: string;
   active: boolean;
   children: React.ReactNode;
-  icon?: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[12.5px] font-bold whitespace-nowrap transition ${
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-[12.5px] font-bold whitespace-nowrap transition ${
         active
-          ? "bg-white text-brand-700 shadow-sm ring-1 ring-brand-200"
-          : "text-ink-500 hover:bg-white/70 hover:text-ink-800"
+          ? "bg-white text-brand-700 shadow-sm ring-1 ring-brand-200/80"
+          : "text-ink-500 hover:bg-white/60 hover:text-ink-800"
       }`}
     >
-      {icon}
       {children}
     </Link>
   );
 }
 
-/** چیپ انتخاب داخل پنل «فیلترهای بیشتر». */
+/** چیپ افقی یکنواخت داخل پنل فیلترها. */
 function Chip({
   href,
   active,
@@ -87,14 +84,47 @@ function Chip({
     <Link
       href={href}
       aria-pressed={active}
-      className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 text-[12px] font-bold whitespace-nowrap transition ${
+      className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11.5px] font-bold whitespace-nowrap transition ${
         active
           ? "border-brand-500 bg-brand-500 text-white shadow-sm shadow-brand-500/25"
-          : "border-ink-100 bg-white text-ink-600 hover:border-brand-200 hover:text-brand-700"
+          : "border-ink-100 bg-white text-ink-600 hover:border-brand-200 hover:bg-brand-50/40 hover:text-brand-700"
       }`}
     >
       {children}
     </Link>
+  );
+}
+
+/**
+ * یک گروه فیلتر: سرتیتر + (در صورت وجود مقدار فعال) لینک «همه».
+ * ستون‌ها هم‌عرض‌اند و چیپ‌ها از سمت راست هم‌تراز می‌شوند.
+ */
+function FilterGroup({
+  title,
+  resetHref,
+  isActive,
+  children,
+}: {
+  title: string;
+  resetHref: string;
+  isActive: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="mb-2 flex min-h-5 items-center justify-between gap-2">
+        <span className="text-[11px] font-black tracking-wide text-ink-400">{title}</span>
+        {isActive && (
+          <Link
+            href={resetHref}
+            className="rounded-md px-1.5 py-0.5 text-[10.5px] font-bold text-brand-600 transition hover:bg-brand-50"
+          >
+            همه
+          </Link>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
   );
 }
 
@@ -104,21 +134,13 @@ function FilterToken({ label, href }: { label: string; href: string }) {
     <Link
       href={href}
       title="حذف این فیلتر"
-      className="group inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 py-1 pr-2.5 pl-1.5 text-[11.5px] font-bold text-brand-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+      className="group inline-flex items-center gap-1 rounded-full border border-brand-200 bg-brand-50 py-1 pr-2.5 pl-1 text-[11px] font-bold text-brand-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
     >
       {label}
-      <span className="grid size-4 place-items-center rounded-full bg-white/80 text-ink-400 transition group-hover:bg-rose-100 group-hover:text-rose-600">
+      <span className="grid size-4 place-items-center rounded-full bg-white text-ink-400 transition group-hover:bg-rose-100 group-hover:text-rose-600">
         <Icon name="x" className="size-2.5" />
       </span>
     </Link>
-  );
-}
-
-function GroupLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="mb-2 block text-[11px] font-black tracking-wide text-ink-400">
-      {children}
-    </span>
   );
 }
 
@@ -173,7 +195,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
           <p className="mt-2 text-sm text-ink-400">
             {faNumber(books.length)} آگهی
             {q ? ` برای «${q}»` : ""}
-            {hasFilters ? " با فیلترهای انتخابی" : " فعال"}
+            {hasFilters ? " · با فیلترهای انتخابی" : " فعال"}
           </p>
         </div>
         <Link
@@ -186,9 +208,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
       </div>
 
       {/* ------------------------------- toolbar ------------------------------- */}
-      <section className="card-surface overflow-hidden p-3.5 sm:p-4">
+      <section className="card-surface p-3.5 sm:p-4">
         {/* ردیف ۱: جستجو + مرتب‌سازی */}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
           <form action="/books" method="get" className="relative flex-1" role="search">
             {medium && <input type="hidden" name="medium" value={medium} />}
             {kind && <input type="hidden" name="kind" value={kind} />}
@@ -204,10 +226,10 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
               name="q"
               defaultValue={q}
               placeholder="نام کتاب، جزوه، استاد یا دانشگاه…"
-              className="field-base pr-11 pl-24"
+              className="field-base h-11 pr-11 pl-24 text-[13.5px]"
               autoComplete="off"
             />
-            <div className="absolute inset-y-0 left-1.5 my-auto flex items-center gap-1">
+            <div className="absolute inset-y-0 left-1.5 my-auto flex items-center gap-0.5">
               {q && (
                 <Link
                   href={buildHref(params, { q: undefined })}
@@ -219,39 +241,32 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
               )}
               <button
                 type="submit"
-                className="flex h-8 items-center gap-1 rounded-lg bg-ink-900 px-3 text-[11.5px] font-bold text-white transition hover:bg-brand-700"
+                className="h-8 rounded-lg bg-gradient-to-l from-brand-600 to-brand-500 px-3 text-[11.5px] font-bold text-white shadow-sm shadow-brand-500/25 transition hover:from-brand-700 hover:to-brand-600"
               >
                 جستجو
               </button>
             </div>
           </form>
 
-          {/* مرتب‌سازی */}
-          <div className="flex items-center gap-2">
-            <span className="hidden shrink-0 items-center gap-1 text-[11.5px] font-bold text-ink-400 sm:flex">
-              <Icon name="filter" className="size-3.5" />
-              ترتیب
-            </span>
-            <div className="flex flex-1 items-center gap-0.5 rounded-2xl bg-ink-50 p-1">
-              {SORTS.map((item) => (
-                <Segment
-                  key={item.value}
-                  href={buildHref(params, {
-                    sort: item.value === "new" ? undefined : item.value,
-                  })}
-                  active={sort === item.value}
-                  icon={<Icon name={item.icon} className="size-3.5" />}
-                >
-                  {item.label}
-                </Segment>
-              ))}
-            </div>
+          <div className="flex items-center gap-0.5 rounded-2xl bg-ink-50 p-1 lg:w-80">
+            {SORTS.map((item) => (
+              <Segment
+                key={item.value}
+                href={buildHref(params, {
+                  sort: item.value === "new" ? undefined : item.value,
+                })}
+                active={sort === item.value}
+              >
+                <Icon name={item.icon} className="size-3.5 opacity-70" />
+                {item.label}
+              </Segment>
+            ))}
           </div>
         </div>
 
-        {/* ردیف ۲: بازار + فیلترهای بیشتر */}
-        <div className="mt-3 flex flex-col gap-2.5 border-t border-dashed border-ink-100 pt-3 sm:flex-row sm:items-center">
-          <div className="flex flex-1 items-center gap-0.5 rounded-2xl bg-ink-50 p-1">
+        {/* ردیف ۲: بازار */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-dashed border-ink-100 pt-2.5">
+          <div className="flex w-full items-center gap-0.5 rounded-2xl bg-ink-50 p-1 sm:w-auto">
             {MARKETS.map((item) => (
               <Segment
                 key={item.label}
@@ -264,15 +279,10 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
             ))}
           </div>
 
-          <details className="group sm:w-auto" open={hasAdvancedFilters}>
-            <summary
-              className={`flex cursor-pointer list-none items-center justify-center gap-1.5 rounded-2xl border px-3.5 py-2 text-[12.5px] font-bold transition select-none [&::-webkit-details-marker]:hidden ${
-                hasAdvancedFilters
-                  ? "border-brand-200 bg-brand-50 text-brand-700"
-                  : "border-ink-100 bg-white text-ink-600 hover:border-brand-200 hover:text-brand-700"
-              }`}
-            >
-              <Icon name="filter" className="size-4" />
+          {/* پنل بازشو: summary جمع‌وجور و پنل تمام‌عرض زیر آن */}
+          <details className="group w-full" open={hasAdvancedFilters}>
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-1.5 rounded-2xl border border-ink-100 bg-white px-3 py-2 text-[12px] font-bold text-ink-600 transition select-none hover:border-brand-200 hover:text-brand-700 [&::-webkit-details-marker]:hidden sm:w-auto">
+              <Icon name="filter" className="size-4 opacity-80" />
               فیلترهای بیشتر
               {hasAdvancedFilters && (
                 <span className="grid size-4.5 place-items-center rounded-full bg-brand-600 text-[9.5px] font-black text-white">
@@ -281,66 +291,64 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
               )}
               <Icon
                 name="chevron"
-                className="size-3.5 transition-transform group-open:rotate-180"
+                className="size-3.5 opacity-70 transition-transform group-open:rotate-180"
               />
             </summary>
 
-            <div className="mt-3 grid gap-4 rounded-2xl border border-ink-100 bg-ink-50/50 p-3.5 sm:grid-cols-2 lg:grid-cols-3">
-              <div>
-                <GroupLabel>نوع محتوا</GroupLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  <Chip href={buildHref(params, { kind: undefined })} active={!kind}>
-                    همه
+            <div className="mt-3 grid gap-x-5 gap-y-4 rounded-2xl border border-ink-100 bg-ink-50/40 p-3.5 sm:grid-cols-3 sm:divide-x sm:divide-ink-100 sm:rtl:divide-x-reverse">
+              <FilterGroup
+                title="نوع محتوا"
+                resetHref={buildHref(params, { kind: undefined })}
+                isActive={Boolean(kind)}
+              >
+                {KINDS.map((item) => (
+                  <Chip
+                    key={item.value}
+                    href={buildHref(params, { kind: item.value })}
+                    active={kind === item.value}
+                  >
+                    <span className="text-[12px]">{item.emoji}</span>
+                    {item.label}
                   </Chip>
-                  {KINDS.map((item) => (
-                    <Chip
-                      key={item.value}
-                      href={buildHref(params, { kind: item.value })}
-                      active={kind === item.value}
-                    >
-                      <span>{item.emoji}</span>
-                      {item.label}
-                    </Chip>
-                  ))}
-                </div>
-              </div>
+                ))}
+              </FilterGroup>
 
-              <div>
-                <GroupLabel>نوع معامله</GroupLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  <Chip href={buildHref(params, { offerType: undefined })} active={!offerType}>
-                    همه
-                  </Chip>
+              <div className="sm:ps-5">
+                <FilterGroup
+                  title="نوع معامله"
+                  resetHref={buildHref(params, { offerType: undefined })}
+                  isActive={Boolean(offerType)}
+                >
                   {OFFER_TYPES.map((item) => (
                     <Chip
                       key={item.value}
                       href={buildHref(params, { offerType: item.value })}
                       active={offerType === item.value}
                     >
-                      <span>{item.emoji}</span>
+                      <span className="text-[12px]">{item.emoji}</span>
                       {item.label}
                     </Chip>
                   ))}
-                </div>
+                </FilterGroup>
               </div>
 
-              <div>
-                <GroupLabel>رشته تحصیلی</GroupLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  <Chip href={buildHref(params, { category: undefined })} active={!category}>
-                    همه
-                  </Chip>
+              <div className="sm:ps-5">
+                <FilterGroup
+                  title="رشته تحصیلی"
+                  resetHref={buildHref(params, { category: undefined })}
+                  isActive={Boolean(category)}
+                >
                   {CATEGORIES.map((item) => (
                     <Chip
                       key={item.value}
                       href={buildHref(params, { category: item.value })}
                       active={category === item.value}
                     >
-                      <span>{item.emoji}</span>
+                      <span className="text-[12px]">{item.emoji}</span>
                       {item.label}
                     </Chip>
                   ))}
-                </div>
+                </FilterGroup>
               </div>
             </div>
           </details>
@@ -348,8 +356,11 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
 
         {/* ردیف ۳: فیلترهای فعال */}
         {hasFilters && (
-          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-dashed border-ink-100 pt-3">
-            <span className="text-[11.5px] font-bold text-ink-400">فیلترهای فعال:</span>
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-dashed border-ink-100 pt-2.5">
+            <span className="flex shrink-0 items-center gap-1 text-[11px] font-bold text-ink-400">
+              <Icon name="filter" className="size-3.5" />
+              فعال:
+            </span>
             {activeTokens.map((token) => (
               <FilterToken
                 key={token.key}
@@ -359,7 +370,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
             ))}
             <Link
               href="/books"
-              className="mr-auto text-[11.5px] font-bold text-rose-600 transition hover:text-rose-700 hover:underline"
+              className="rounded-md px-1.5 py-0.5 text-[11px] font-bold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
             >
               پاک کردن همه
             </Link>
