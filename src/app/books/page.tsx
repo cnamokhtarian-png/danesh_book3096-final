@@ -81,9 +81,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
   });
   const hasFilters = Boolean(q || kind || medium || offerType || category);
 
-  // کلاس استاندارد برای راست‌چین‌سازی واقعی بدون به هم ریختگی اسکرول
-  const scrollRowClass =
-    "flex items-center gap-2 overflow-x-auto overflow-y-hidden py-2 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden text-right";
+  // کلاس مشترک برای اسکرول افقیِ مختصِ دکمه‌ها (بدون تأثیر روی برچسب ثابت)
+  const chipsScrollContainer =
+    "flex items-center gap-2 overflow-x-auto overflow-y-hidden py-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden w-full";
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
@@ -111,112 +111,121 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
       </div>
 
       {/* پنل فیلترها */}
-      <div className="card-surface space-y-3 p-4 overflow-hidden rounded-3xl shadow-sm bg-white border border-ink-100">
+      <div className="card-surface space-y-3.5 p-4 overflow-hidden rounded-3xl shadow-sm bg-white border border-ink-100">
         
         {/* ردیف اول: بازار + مرتب‌سازی */}
-        <div className={scrollRowClass}>
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
+        <div className="flex items-center gap-3">
+          <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-ink-500 w-20">
             <Icon name="filter" className="size-4" />
             بازار:
           </span>
-          <Link href={buildHref(params, { medium: undefined })} className="shrink-0">
-            <Chip active={!medium}>همه</Chip>
-          </Link>
-          {MEDIUMS.map((item) => (
-            <Link
-              key={item.value}
-              href={buildHref(params, { medium: item.value })}
-              className="shrink-0"
-            >
-              <Chip active={medium === item.value} tone="cyan">
-                {item.emoji} {item.label}
-              </Chip>
+          <div className={chipsScrollContainer}>
+            <Link href={buildHref(params, { medium: undefined })} className="shrink-0">
+              <Chip active={!medium}>همه</Chip>
             </Link>
-          ))}
-          <span className="mx-2 h-6 w-px shrink-0 bg-ink-100" />
-          {SORTS.map((item) => (
-            <Link
-              key={item.value}
-              href={buildHref(params, { sort: item.value === "new" ? undefined : item.value })}
-              className="shrink-0"
-            >
-              <Chip active={sort === item.value}>{item.label}</Chip>
-            </Link>
-          ))}
-          {hasFilters && (
-            <>
-              <span className="mx-2 h-6 w-px shrink-0 bg-ink-100" />
+            {MEDIUMS.map((item) => (
               <Link
-                href="/books"
-                className="shrink-0 whitespace-nowrap rounded-2xl border border-rose-100 bg-rose-50 px-3.5 py-2 text-[12.5px] font-bold text-rose-600 transition hover:bg-rose-100"
+                key={item.value}
+                href={buildHref(params, { medium: item.value })}
+                className="shrink-0"
               >
-                حذف فیلترها
+                <Chip active={medium === item.value} tone="cyan">
+                  {item.emoji} {item.label}
+                </Chip>
               </Link>
-            </>
-          )}
+            ))}
+            <span className="mx-2 h-6 w-px shrink-0 bg-ink-100" />
+            {SORTS.map((item) => (
+              <Link
+                key={item.value}
+                href={buildHref(params, { sort: item.value === "new" ? undefined : item.value })}
+                className="shrink-0"
+              >
+                <Chip active={sort === item.value}>{item.label}</Chip>
+              </Link>
+            ))}
+            {hasFilters && (
+              <>
+                <span className="mx-2 h-6 w-px shrink-0 bg-ink-100" />
+                <Link
+                  href="/books"
+                  className="shrink-0 whitespace-nowrap rounded-2xl border border-rose-100 bg-rose-50 px-3.5 py-2 text-[12.5px] font-bold text-rose-600 transition hover:bg-rose-100"
+                >
+                  حذف فیلترها
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ردیف دوم: نوع */}
-        <div className={`${scrollRowClass} border-t border-dashed border-ink-100 pt-3`}>
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
+        <div className="flex items-center gap-3 border-t border-dashed border-ink-100 pt-3">
+          <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-ink-500 w-20">
             <Icon name="note" className="size-4" />
             نوع:
           </span>
-          <Link href={buildHref(params, { kind: undefined })} className="shrink-0">
-            <Chip active={!kind}>همه انواع</Chip>
-          </Link>
-          {KINDS.map((item) => (
-            <Link key={item.value} href={buildHref(params, { kind: item.value })} className="shrink-0">
-              <Chip active={kind === item.value} tone="violet">
-                {item.emoji} {item.label}
-              </Chip>
+          <div className={chipsScrollContainer}>
+            <Link href={buildHref(params, { kind: undefined })} className="shrink-0">
+              <Chip active={!kind}>همه انواع</Chip>
             </Link>
-          ))}
+            {KINDS.map((item) => (
+              <Link key={item.value} href={buildHref(params, { kind: item.value })} className="shrink-0">
+                <Chip active={kind === item.value} tone="violet">
+                  {item.emoji} {item.label}
+                </Chip>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* ردیف سوم: معامله */}
-        <div className={`${scrollRowClass} border-t border-dashed border-ink-100 pt-3`}>
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
+        <div className="flex items-center gap-3 border-t border-dashed border-ink-100 pt-3">
+          <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-ink-500 w-20">
             <Icon name="exchange" className="size-4" />
             معامله:
           </span>
-          <Link href={buildHref(params, { offerType: undefined })} className="shrink-0">
-            <Chip active={!offerType}>همه</Chip>
-          </Link>
-          {OFFER_TYPES.map((item) => (
-            <Link
-              key={item.value}
-              href={buildHref(params, { offerType: item.value })}
-              className="shrink-0"
-            >
-              <Chip active={offerType === item.value}>
-                {item.emoji} {item.label}
-              </Chip>
+          <div className={chipsScrollContainer}>
+            <Link href={buildHref(params, { offerType: undefined })} className="shrink-0">
+              <Chip active={!offerType}>همه</Chip>
             </Link>
-          ))}
+            {OFFER_TYPES.map((item) => (
+              <Link
+                key={item.value}
+                href={buildHref(params, { offerType: item.value })}
+                className="shrink-0"
+              >
+                <Chip active={offerType === item.value}>
+                  {item.emoji} {item.label}
+                </Chip>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* ردیف چهارم: رشته */}
-        <div className={`${scrollRowClass} border-t border-dashed border-ink-100 pt-3`}>
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
+        <div className="flex items-center gap-3 border-t border-dashed border-ink-100 pt-3">
+          <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-bold text-ink-500 w-20">
             <Icon name="grad" className="size-4" />
             رشته:
           </span>
-          <Link href={buildHref(params, { category: undefined })} className="shrink-0">
-            <Chip active={!category}>همه رشته‌ها</Chip>
-          </Link>
-          {CATEGORIES.map((item) => (
-            <Link
-              key={item.value}
-              href={buildHref(params, { category: item.value })}
-              className="shrink-0"
-            >
-              <Chip active={category === item.value}>
-                {item.emoji} {item.label}
-              </Chip>
+          <div className={chipsScrollContainer}>
+            <Link href={buildHref(params, { category: undefined })} className="shrink-0">
+              <Chip active={!category}>همه رشته‌ها</Chip>
             </Link>
-          ))}
+            {CATEGORIES.map((item) => (
+              <Link
+                key={item.value}
+                href={buildHref(params, { category: item.value })}
+                className="shrink-0"
+              >
+                <Chip active={category === item.value}>
+                  {item.emoji} {item.label}
+                </Chip>
+              </Link>
+            ))}
+          </div>
         </div>
+
       </div>
 
       {/* بخش نمایش کارت‌های کتاب */}
