@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import SeedDemoButton from "@/components/SeedDemoButton";
 import SuggestionManager from "@/components/SuggestionManager";
 import { Icon } from "@/components/Icon";
 import { Badge, EmptyState, StatTile } from "@/components/ui";
@@ -91,6 +92,8 @@ export default async function AdminPage() {
           tone="amber"
         />
       </section>
+
+      <SeedDemoButton />
 
       <SuggestionManager items={suggestions} />
 

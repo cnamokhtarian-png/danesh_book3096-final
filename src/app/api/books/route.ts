@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { books } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { attachFileToBook, saveExternalLink } from "@/lib/files";
 import { CATEGORIES, CONDITIONS, KINDS, OFFER_TYPES, mediumOfKind } from "@/lib/constants";
 import { HttpError, jsonError, readJsonBody, str, toInt, withDb } from "@/lib/http";
 import { listBooks } from "@/lib/queries";
@@ -87,6 +88,22 @@ export async function POST(request: Request) {
     return jsonError("درخواست کتاب نیاز به قیمت ندارد.", 422);
   }
 
+  // فایل آگهی (اختیاری): یا فایل آپلودشده (fileId) یا لینک منبع (fileUrl).
+  const fileId = toInt(body.fileId, 0);
+  const rawFileUrl = str(body.fileUrl, 500);
+  let fileUrl: string | null = null;
+  if (rawFileUrl) {
+    try {
+      const parsed = new URL(rawFileUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return jsonError("لینک فایل باید با http یا https شروع شود.", 422);
+      }
+      fileUrl = parsed.toString();
+    } catch {
+      return jsonError("لینک فایل معتبر نیست.", 422);
+    }
+  }
+
   const userKey = rateKey(request, `user:${user.id}`);
   if (createLimiter.isLimited(userKey)) {
     return jsonError("تعداد آگهی‌های ثبت‌شده در این ساعت زیاد است. کمی بعد دوباره تلاش کنید.", 429);
@@ -116,6 +133,28 @@ export async function POST(request: Request) {
       .returning();
 
     if (!created) throw new HttpError("ثبت آگهی انجام نشد. دوباره تلاش کنید.", 500);
+
+    // اتصال فایل: اگر شناسه‌ی فایل آپلودشده آمده باشد همان، وگرنه لینک منبع.
+    if (fileId > 0) {
+      const attached = await attachFileToBook(fileId, created.id, user.id);
+      if (!attached) {
+        console.warn(
+          `[daneshbook:books] file ${fileId} به آگهی ${created.id} وصل نشد (مالکیت یا فایل تکراری).`,
+        );
+      }
+    } else if (fileUrl) {
+      try {
+        const link = await saveExternalLink({
+          ownerId: user.id,
+          fileName: title,
+          externalUrl: fileUrl,
+        });
+        await attachFileToBook(link.id, created.id, user.id);
+      } catch (error) {
+        console.error("[daneshbook:books] external link failed:", (error as Error).message);
+      }
+    }
+
     createLimiter.register(userKey);
     return { book: created };
   });

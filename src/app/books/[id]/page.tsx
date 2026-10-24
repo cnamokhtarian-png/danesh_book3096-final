@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookCardGrid } from "@/components/BookCard";
+import FileCard from "@/components/FileCard";
 import { Icon } from "@/components/Icon";
 import JsonLd from "@/components/JsonLd";
 import RequestForm from "@/components/RequestForm";
 import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
+import { getBookFile } from "@/lib/files";
 import {
   categoryEmoji,
   categoryLabel,
@@ -98,7 +100,10 @@ export default async function BookDetailPage({ params }: PageProps) {
   const [book, user] = await Promise.all([getBookById(id), getCurrentUser()]);
   if (!book) notFound();
 
-  const related = await listRelatedBooks(book.id, book.category, 4);
+  const [related, file] = await Promise.all([
+    listRelatedBooks(book.id, book.category, 4),
+    getBookFile(book.id),
+  ]);
 
   const isOwner = user?.id === book.ownerId;
 
@@ -261,6 +266,8 @@ export default async function BookDetailPage({ params }: PageProps) {
               سابقه دانشجو در دانش‌بوک است.
             </p>
           </div>
+
+          {file && <FileCard file={file} />}
 
           <RequestForm
             bookId={book.id}
