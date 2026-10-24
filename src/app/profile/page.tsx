@@ -8,7 +8,10 @@ import { listBooksByOwner } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "پروفایل | دانش‌بوک" };
+export const metadata = {
+  title: "پروفایل",
+  robots: { index: false, follow: false },
+};
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();

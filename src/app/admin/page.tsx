@@ -9,7 +9,10 @@ import { getStats, listSuggestions, listUsersForAdmin } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "پنل مدیریت | دانش‌بوک" };
+export const metadata = {
+  title: "پنل مدیریت",
+  robots: { index: false, follow: false },
+};
 
 export default async function AdminPage() {
   const user = await getCurrentUser();

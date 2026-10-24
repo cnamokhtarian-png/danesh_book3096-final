@@ -18,7 +18,10 @@ import { listBooksByOwner, listUserRequests } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "داشبورد | دانش‌بوک" };
+export const metadata = {
+  title: "داشبورد",
+  robots: { index: false, follow: false },
+};
 
 const STATUS_TONE: Record<string, "brand" | "amber" | "emerald" | "rose" | "slate"> = {
   pending: "amber",

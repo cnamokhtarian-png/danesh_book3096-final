@@ -1,11 +1,43 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BookCardGrid } from "@/components/BookCard";
+import JsonLd from "@/components/JsonLd";
 import { Icon } from "@/components/Icon";
 import { EmptyState } from "@/components/ui";
 import { CATEGORIES, faNumber, KINDS, OFFER_TYPES } from "@/lib/constants";
 import { listBooks } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * متادیتای صفحه فهرست:
+ * - حالت ساده: index + canonical به /books
+ * - حالت فیلترشده/جستجو/مرتب‌سازی: noindex, follow تا محتوای تکراری و
+ *   صفحه‌های بی‌پایان وارد ایندکس گوگل نشوند.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const hasFilter = ["q", "kind", "medium", "offerType", "category", "sort"].some(
+    (key) => Boolean(one(params[key])),
+  );
+
+  return {
+    title: "بازار کتاب، جزوه و فایل درسی",
+    description:
+      "جستجو در آگهی‌های دانش‌بوک: خرید و فروش کتاب دست دوم دانشگاهی، تبادل کتاب، واگذاری رایگان، دانلود جزوه، اسلاید و نمونه سوال امتحانی.",
+    alternates: { canonical: "/books" },
+    robots: hasFilter ? { index: false, follow: true } : { index: true, follow: true },
+    openGraph: {
+      title: "بازار کتاب، جزوه و فایل درسی | دانش‌بوک",
+      description: "خرید، فروش و تبادل کتاب دانشگاهی، جزوه، اسلاید و نمونه سوال.",
+      url: "/books",
+    },
+  };
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -183,6 +215,20 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
 
   return (
     <div className="space-y-5 text-right" dir="rtl">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "آگهی‌های کتاب و جزوه",
+          numberOfItems: books.length,
+          itemListElement: books.slice(0, 20).map((book, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            url: `/books/${book.id}`,
+            name: book.title,
+          })),
+        }}
+      />
       {/* -------------------------------- header ------------------------------- */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>

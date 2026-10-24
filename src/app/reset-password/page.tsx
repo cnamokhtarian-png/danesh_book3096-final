@@ -6,7 +6,7 @@ import { findResetTarget } from "@/lib/password-reset";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "تعیین رمز عبور جدید | دانش‌بوک",
+  title: "تعیین رمز عبور جدید",
   robots: { index: false, follow: false },
 };
 

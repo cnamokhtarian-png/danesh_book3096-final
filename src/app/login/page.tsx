@@ -6,7 +6,10 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "ورود | دانش‌بوک" };
+export const metadata = {
+  title: "ورود",
+  robots: { index: false, follow: false },
+};
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 

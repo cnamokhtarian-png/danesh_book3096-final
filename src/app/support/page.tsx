@@ -6,7 +6,8 @@ import { MANAGEMENT_EMAIL } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "پیشنهادات و پشتیبانی | دانش‌بوک",
+  title: "پیشنهادات و پشتیبانی",
+  alternates: { canonical: "/support" },
   description: "نظرات، پیشنهادات و انتقادات خود را با تیم مدیریت دانش‌بوک به اشتراک بگذارید.",
 };
 

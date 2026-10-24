@@ -435,3 +435,47 @@ export async function bumpViews(id: number): Promise<void> {
     /* view counting must never break the page */
   }
 }
+
+/* --------------------------------- seo ---------------------------------- */
+
+export type SitemapBook = { id: number; updatedAt: Date; createdAt: Date };
+
+/**
+ * همه آگهی‌ها برای ساخت sitemap. در خطا آرایه خالی برمی‌گردد تا sitemap
+ * دست‌کم صفحه‌های ثابت را داشته باشد و هرگز ۵۰۰ نشود.
+ */
+export async function listBooksForSitemap(limit = 5000): Promise<SitemapBook[]> {
+  try {
+    // فقط آگهی‌های فعال: صفحه‌های noindex نباید در sitemap باشند، وگرنه
+    // سرچ کنسول خطای «آدرس ارسال‌شده با noindex علامت خورده» می‌دهد.
+    return await db
+      .select({ id: books.id, updatedAt: books.updatedAt, createdAt: books.createdAt })
+      .from(books)
+      .where(eq(books.status, "available"))
+      .orderBy(desc(books.createdAt))
+      .limit(limit);
+  } catch (error) {
+    console.error("[daneshbook:query] listBooksForSitemap failed:", (error as Error).message);
+    return [];
+  }
+}
+
+/** آگهی‌های مشابه (هم‌دسته) برای لینک‌سازی داخلی در صفحه جزئیات. */
+export async function listRelatedBooks(
+  bookId: number,
+  category: string,
+  limit = 4,
+): Promise<BookCardData[]> {
+  try {
+    return await db
+      .select(bookSelection)
+      .from(books)
+      .innerJoin(users, eq(users.id, books.ownerId))
+      .where(and(eq(books.category, category), ne(books.id, bookId), eq(books.status, "available")))
+      .orderBy(desc(books.createdAt))
+      .limit(limit);
+  } catch (error) {
+    console.error("[daneshbook:query] listRelatedBooks failed:", (error as Error).message);
+    return [];
+  }
+}

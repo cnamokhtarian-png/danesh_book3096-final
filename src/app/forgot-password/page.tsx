@@ -7,7 +7,8 @@ import { getCurrentUser } from "@/lib/auth";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "فراموشی رمز عبور | دانش‌بوک",
+  title: "فراموشی رمز عبور",
+  robots: { index: false, follow: false },
   description: "بازیابی رمز عبور حساب دانشجویی از طریق ایمیل ثبت‌شده.",
 };
 

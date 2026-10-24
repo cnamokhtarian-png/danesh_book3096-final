@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { BookCardGrid } from "@/components/BookCard";
+import JsonLd from "@/components/JsonLd";
 import { SearchField } from "@/components/AppShell";
 import { Icon, type IconName } from "@/components/Icon";
 import { EmptyState, SectionHeading, StatTile } from "@/components/ui";
 import { faNumber, MANAGEMENT_EMAIL } from "@/lib/constants";
 import { getStats, listBooks } from "@/lib/queries";
+import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -75,8 +77,40 @@ export default async function HomePage() {
     },
   ];
 
+  // داده ساختاریافته صفحه اصلی: سازمان + سایت + جستجوی داخلی
+  const siteSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE.url}/#organization`,
+        name: SITE.name,
+        url: SITE.url,
+        logo: `${SITE.url}/images/og-cover.jpg`,
+        email: SITE.email,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE.url}/#website`,
+        url: SITE.url,
+        name: SITE.name,
+        inLanguage: "fa-IR",
+        publisher: { "@id": `${SITE.url}/#organization` },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: `${SITE.url}/books?q={search_term_string}`,
+          },
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
+  };
+
   return (
     <div className="space-y-14">
+      <JsonLd data={siteSchema} />
       {/* ------------------------------- hero ------------------------------- */}
       <section className="animate-fade-up relative overflow-hidden rounded-[2rem] border border-ink-100 bg-white px-6 py-10 sm:px-10 sm:py-14">
         <div className="aurora-blob -end-24 -top-24 size-72 bg-brand-300" aria-hidden />
