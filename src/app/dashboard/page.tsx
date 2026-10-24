@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import BookOwnerActions from "@/components/BookOwnerActions";
+import ShareButton from "@/components/ShareButton";
 import RequestActions from "@/components/RequestActions";
 import { Icon } from "@/components/Icon";
 import { Badge, EmptyState, SectionHeading, StatTile } from "@/components/ui";
@@ -132,7 +133,14 @@ export default async function DashboardPage() {
                   <span className="text-[13px] font-extrabold text-brand-700">
                     {formatPrice(book.price, book.offerType)}
                   </span>
-                  <BookOwnerActions id={book.id} status={book.status} />
+                  <div className="flex items-center gap-1">
+                    <ShareButton
+                      variant="icon"
+                      title={book.title}
+                      path={`/books/${book.id}`}
+                    />
+                    <BookOwnerActions id={book.id} status={book.status} />
+                  </div>
                 </div>
               </div>
             ))}

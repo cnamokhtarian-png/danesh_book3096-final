@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import ShareButton from "@/components/ShareButton";
 import { BookCardGrid } from "@/components/BookCard";
 import JsonLd from "@/components/JsonLd";
 import { SearchField } from "@/components/AppShell";
@@ -372,6 +373,23 @@ export default async function HomePage() {
             {MANAGEMENT_EMAIL}
           </a>
         </div>
+      </section>
+
+      {/* --------------------------- growth: share -------------------------- */}
+      <section className="card-surface flex flex-wrap items-center justify-between gap-5 p-6">
+        <div className="min-w-0 max-w-xl">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink-900">
+            <span className="grid size-9 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+              <Icon name="send" className="size-4.5" />
+            </span>
+            دانش‌بوک را به دوستت معرفی کن
+          </h2>
+          <p className="mt-2 text-[13px] leading-8 text-ink-500">
+            هر دانشجویی که به دانش‌بوک اضافه می‌شود، شانس پیدا کردن کتاب و جزوه‌ی مناسب را
+            برای همه بیشتر می‌کند. لینک سایت را در گروه کلاسی‌ات بفرست.
+          </p>
+        </div>
+        <ShareButton title="دانش‌بوک؛ بازار کتاب و جزوه‌ی دانشجویی" path="/" variant="inline" />
       </section>
     </div>
   );

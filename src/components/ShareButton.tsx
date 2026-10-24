@@ -4,15 +4,30 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 
 /**
- * اشتراک‌گذاری آگهی — مهم‌ترین اهرم رشد دهان‌به‌دهان.
+ * اشتراک‌گذاری — مهم‌ترین اهرم رشد دهان‌به‌دهان.
  *
  * هر آگهی یک آدرس یکتا با کارت Open Graph دارد، پس فرستادن لینک هم به
  * صاحب آگهی کمک می‌کند و هم بازدیدکننده واقعی می‌آورد.
  *
  * آدرس کامل عمداً فقط هنگام کلیک ساخته می‌شود (نه در رندر) تا خروجی سرور و
- * کلاینت یکی بمانند و hydration به‌هم نریزد.
+ * کلاینت یکی بماند و hydration به‌هم نریزد.
+ *
+ * variant:
+ *  - "card"    → کارت کامل برای صفحه‌ی آگهی
+ *  - "inline"  → ردیف فشرده برای معرفی سایت (خانه/داشبورد)
+ *  - "icon"    → فقط آیکون، برای کنار دکمه‌های دیگر
  */
-export default function ShareButton({ title, path }: { title: string; path: string }) {
+export default function ShareButton({
+  title,
+  path = "/",
+  variant = "card",
+  description,
+}: {
+  title: string;
+  path?: string;
+  variant?: "card" | "inline" | "icon";
+  description?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -33,7 +48,7 @@ export default function ShareButton({ title, path }: { title: string; path: stri
       setCopied(true);
     } catch {
       // مرورگر بدون دسترسی کلیپ‌بورد: انتخاب دستی به کاربر پیشنهاد می‌شود.
-      window.prompt("لینک آگهی را کپی کنید:", absoluteUrl());
+      window.prompt("لینک را کپی کنید:", absoluteUrl());
     }
   }
 
@@ -56,8 +71,57 @@ export default function ShareButton({ title, path }: { title: string; path: stri
     window.open(target, "_blank", "noopener,noreferrer");
   }
 
-  const btn =
+  const outlineBtn =
     "inline-flex items-center justify-center gap-2 rounded-2xl border border-ink-100 bg-white px-4 py-2.5 text-[13px] font-bold text-ink-800 transition hover:border-brand-200 hover:text-brand-700";
+
+  const primaryBtn =
+    "inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-brand-600 to-brand-500 px-4 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-brand-500/25 transition hover:brightness-105";
+
+  const copyBtn =
+    "inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-100 bg-ink-50/60 px-4 py-2.5 text-[13px] font-bold text-ink-600 transition hover:border-brand-200 hover:text-brand-700";
+
+  if (variant === "icon") {
+    return (
+      <button
+        type="button"
+        onClick={share}
+        title="اشتراک‌گذاری"
+        aria-label="اشتراک‌گذاری"
+        className="grid size-8 place-items-center rounded-xl text-ink-400 transition hover:bg-brand-50 hover:text-brand-700"
+      >
+        <Icon name={copied ? "check" : "send"} className="size-4" />
+      </button>
+    );
+  }
+
+  if (variant === "inline") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={share} className={primaryBtn}>
+          <Icon name="send" className="size-4" />
+          اشتراک‌گذاری
+        </button>
+        <button
+          type="button"
+          onClick={() => openMessenger("https://t.me/share/url?url={text}")}
+          className={outlineBtn}
+        >
+          تلگرام
+        </button>
+        <button
+          type="button"
+          onClick={() => openMessenger("https://wa.me/?text={text}")}
+          className={outlineBtn}
+        >
+          واتساپ
+        </button>
+        <button type="button" onClick={copyLink} className={copyBtn}>
+          <Icon name={copied ? "check" : "note"} className="size-4" />
+          {copied ? "کپی شد" : "کپی لینک"}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="card-surface p-5">
@@ -66,16 +130,12 @@ export default function ShareButton({ title, path }: { title: string; path: stri
         برای دوستت بفرست
       </h3>
       <p className="mb-4 text-[12px] leading-6 text-ink-400">
-        اگر این آگهی به کار کسی می‌آید، لینکش را در گروه کلاسی یا کانال دانشگاهی
-        بفرست. هر بازدید تازه شانس دیده‌شدن این آگهی را بیشتر می‌کند.
+        {description ??
+          "اگر این آگهی به کار کسی می‌آید، لینکش را در گروه کلاسی یا کانال دانشگاهی بفرست. هر بازدید تازه شانس دیده‌شدن این آگهی را بیشتر می‌کند."}
       </p>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={share}
-          className="col-span-2 inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-brand-600 to-brand-500 px-4 py-2.5 text-[13px] font-bold text-white shadow-lg shadow-brand-500/25 transition hover:brightness-105"
-        >
+        <button type="button" onClick={share} className={`col-span-2 ${primaryBtn}`}>
           <Icon name="send" className="size-4" />
           اشتراک‌گذاری آگهی
         </button>
@@ -83,7 +143,7 @@ export default function ShareButton({ title, path }: { title: string; path: stri
         <button
           type="button"
           onClick={() => openMessenger("https://t.me/share/url?url={text}")}
-          className={btn}
+          className={outlineBtn}
         >
           تلگرام
         </button>
@@ -91,16 +151,12 @@ export default function ShareButton({ title, path }: { title: string; path: stri
         <button
           type="button"
           onClick={() => openMessenger("https://wa.me/?text={text}")}
-          className={btn}
+          className={outlineBtn}
         >
           واتساپ
         </button>
 
-        <button
-          type="button"
-          onClick={copyLink}
-          className="col-span-2 inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-ink-100 bg-ink-50/60 px-4 py-2.5 text-[13px] font-bold text-ink-600 transition hover:border-brand-200 hover:text-brand-700"
-        >
+        <button type="button" onClick={copyLink} className={`col-span-2 ${copyBtn}`}>
           <Icon name={copied ? "check" : "note"} className="size-4" />
           {copied ? "لینک کپی شد" : "کپی لینک"}
         </button>
