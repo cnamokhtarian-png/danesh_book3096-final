@@ -1,12 +1,36 @@
 /**
- * دانش‌بوک seed script — safe to run multiple times.
- *   node scripts/seed.mjs
+ * دانش‌بوک seed script — safe to run multiple times (idempotent).
+ *
+ *   SEED_PASSWORD='یک-رمز-قوی' node scripts/seed.mjs
+ *
+ * هشدار: این اسکریپت برای محیط توسعه است. روی دیتابیس تولید اجرا نکنید؛
+ * برای ساخت حساب مدیر از `npm run db:set-admin` استفاده کنید.
  */
 import { randomBytes, scryptSync } from "node:crypto";
 import { Client } from "pg";
 
-const connectionString =
-  process.env.DATABASE_URL ?? "postgresql://postgres:postgres@127.0.0.1:5432/app_db";
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error("✖ DATABASE_URL تنظیم نشده است. مثال: DATABASE_URL=postgresql://... node scripts/seed.mjs");
+  process.exit(1);
+}
+
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_SEED !== "1") {
+  console.error(
+    "✖ اجرای seed در محیط تولید مسدود است. اگر واقعاً لازم است ALLOW_SEED=1 را تنظیم کنید.",
+  );
+  process.exit(1);
+}
+
+// رمز کاربران نمونه: از محیط خوانده می‌شود؛ در نبود آن یک رمز تصادفی ساخته
+// می‌شود تا هرگز رمز ثابت و ضعیف ۱۲۳۴۵۶ روی دیتابیس ننشیند.
+const seedPassword =
+  process.env.SEED_PASSWORD ?? randomBytes(9).toString("base64url");
+if (seedPassword.length < 8) {
+  console.error("✖ SEED_PASSWORD باید حداقل ۸ کاراکتر باشد.");
+  process.exit(1);
+}
 
 function hashPassword(password) {
   const salt = randomBytes(16).toString("hex");
@@ -103,7 +127,7 @@ async function main() {
         [
           user.fullName,
           user.email,
-          hashPassword("123456"),
+          hashPassword(seedPassword),
           user.studentCode,
           user.university,
           user.major,
@@ -169,7 +193,14 @@ async function main() {
       console.log(`seeded ${SUGGESTIONS.length} suggestions`);
     }
 
-    console.log("seed complete. admin: c.na.mokhtarian@gmail.com / 123456 · student: sara@daneshbook.ir / 123456");
+    console.log("✔ seed کامل شد.");
+    console.log("  حساب‌های نمونه: c.na.mokhtarian@gmail.com و sara@daneshbook.ir و …");
+    if (process.env.SEED_PASSWORD) {
+      console.log("  رمز: مقدار SEED_PASSWORD که تنظیم کردید.");
+    } else {
+      console.log(`  رمز تصادفی این اجرا (فقط برای محیط توسعه): ${seedPassword}`);
+      console.log("  برای انتخاب رمز دلخواه، SEED_PASSWORD را تنظیم کنید.");
+    }
   } finally {
     await client.end();
   }

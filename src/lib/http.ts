@@ -41,14 +41,48 @@ export async function readJsonBody<T extends Record<string, unknown>>(
   }
 }
 
+/**
+ * Drizzle خطای درایور را در یک خطای بیرونی می‌پیچد، بنابراین `code` و پیام
+ * واقعی در `error.cause` قرار می‌گیرند. بدون پیمایش زنجیره cause، هیچ‌یک از
+ * نگاشت‌های زیر (۲۳۵۰۵، ECONNREFUSED، timeout و …) هرگز فعال نمی‌شد و همه
+ * خطاها به ۵۰۰ مبهم تبدیل می‌شدند. این تابع تا چهار سطح پایین می‌رود.
+ */
+type ErrorLike = { code?: unknown; message?: unknown; name?: unknown; cause?: unknown };
+
+function errorChain(error: unknown): ErrorLike[] {
+  const chain: ErrorLike[] = [];
+  let current = error as ErrorLike | null | undefined;
+  for (let depth = 0; current && depth < 5; depth += 1) {
+    if (typeof current !== "object") break;
+    chain.push(current);
+    current = current.cause as ErrorLike | null | undefined;
+  }
+  return chain;
+}
+
+function firstString(
+  chain: ErrorLike[],
+  key: "code" | "message" | "name",
+): string | undefined {
+  for (const link of chain) {
+    const value = link?.[key];
+    if (typeof value === "string" && value) return value;
+  }
+  return undefined;
+}
+
 function describeDbError(error: unknown): { message: string; status: number } {
-  const err = error as { code?: string; message?: string; name?: string } | null;
+  const err = error as ErrorLike | null;
 
   if (err instanceof HttpError) {
     return { message: err.message, status: err.status };
   }
 
-  switch (err?.code) {
+  const chain = errorChain(error);
+  const code = firstString(chain, "code");
+  const name = firstString(chain, "name");
+
+  switch (code) {
     case "23505":
       return {
         message: "این ایمیل یا شماره دانشجویی قبلاً ثبت شده است.",
@@ -70,23 +104,29 @@ function describeDbError(error: unknown): { message: string; status: number } {
       };
     case "ECONNREFUSED":
     case "ENOTFOUND":
+    case "ETIMEDOUT":
+    case "ECONNRESET":
     case "28P01":
+    case "3D000":
+    case "DB_NOT_CONFIGURED":
       return {
-        message: "ارتباط با سرور دیتابیس برقرار نشد. چند لحظه بعد دوباره تلاش کنید.",
+        message:
+          "ارتباط با سرور دیتابیس برقرار نشد. چند لحظه بعد دوباره تلاش کنید.",
         status: 503,
       };
     default:
       break;
   }
 
-  const message = (err?.message ?? "").toLowerCase();
+  const message = firstString(chain, "message")?.toLowerCase() ?? "";
   if (
     message.includes("etimedout") ||
     message.includes("timeout") ||
     message.includes("statement terminated") ||
     message.includes("connection terminated") ||
-    err?.name === "AbortError" ||
-    err?.name === "TimeoutError"
+    message.includes("terminating connection") ||
+    name === "AbortError" ||
+    name === "TimeoutError"
   ) {
     return {
       message:
@@ -95,6 +135,7 @@ function describeDbError(error: unknown): { message: string; status: number } {
     };
   }
 
+  // پیام‌های داخلی (SQL و مشخصات اتصال) هرگز نباید به کاربر برگردند.
   console.error("[daneshbook:api] unexpected error:", error);
   return {
     message: "خطای غیرمنتظره‌ای رخ داد. لطفاً یک بار دیگر تلاش کنید.",

@@ -15,6 +15,7 @@ export default async function ProfilePage() {
   if (!user) redirect("/login?next=/profile");
 
   const myBooks = await listBooksByOwner(user.id);
+  const activeBooks = myBooks.filter((book) => book.status === "available");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -48,7 +49,7 @@ export default async function ProfilePage() {
           value={faNumber(user.karmaPoints)}
           tone="amber"
         />
-        <StatTile icon="books" label="آگهی فعال" value={faNumber(myBooks.length)} />
+        <StatTile icon="books" label="آگهی فعال" value={faNumber(activeBooks.length)} />
       </section>
 
       {user.bio && (

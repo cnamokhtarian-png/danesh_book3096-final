@@ -57,13 +57,16 @@ export default async function LoginPage({ searchParams }: Props) {
         </p>
         <AuthForm mode="login" next={nextParam} />
 
-        <div className="mt-6 rounded-2xl border border-dashed border-brand-200 bg-brand-50/60 px-4 py-3.5 text-[12.5px] leading-7 text-brand-800">
-          <span className="font-extrabold">حساب نمونه برای تست سریع:</span>
-          <span dir="ltr" className="mx-1 font-bold">
-            sara@daneshbook.ir
-          </span>
-          / <span dir="ltr" className="font-bold">123456</span>
-        </div>
+        {/* فقط در محیط توسعه نمایش داده می‌شود؛ در تولید این بلوک حذف است. */}
+        {process.env.NODE_ENV !== "production" && (
+          <div className="mt-6 rounded-2xl border border-dashed border-brand-200 bg-brand-50/60 px-4 py-3.5 text-[12.5px] leading-7 text-brand-800">
+            <span className="font-extrabold">حساب نمونه برای تست محلی:</span>
+            <span dir="ltr" className="mx-1 font-bold">
+              sara@daneshbook.ir
+            </span>
+            / <span dir="ltr" className="font-bold">123456</span>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -35,9 +35,10 @@ export default async function BookDetailPage({ params }: PageProps) {
   const [book, user] = await Promise.all([getBookById(id), getCurrentUser()]);
   if (!book) notFound();
 
-  await bumpViews(book.id);
-
   const isOwner = user?.id === book.ownerId;
+
+  // بازدید صاحب آگهی و ربات‌های خزش شمارنده را بالا نمی‌برند.
+  if (!isOwner) await bumpViews(book.id);
 
   const meta = [
     { label: "بازار", value: mediumLabel(book.medium), icon: "presentation" as const },

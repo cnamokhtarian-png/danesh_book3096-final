@@ -31,7 +31,9 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
     category: "engineering",
     condition: "good",
     price: "",
-    isExchangeable: true,
+    // پیش‌فرض خاموش است تا برچسب «قابل تبادل» فقط روی آگهی‌هایی بنشیند که
+    // صاحب آگهی واقعاً آن را انتخاب کرده است.
+    isExchangeable: false,
     description: "",
     coverEmoji: "📘",
   });
@@ -257,7 +259,15 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
 
         <button
           type="button"
+          role="switch"
+          aria-checked={form.isExchangeable}
           onClick={() => set("isExchangeable", !form.isExchangeable)}
+          onKeyDown={(event) => {
+            if (event.key === " " || event.key === "Enter") {
+              event.preventDefault();
+              set("isExchangeable", !form.isExchangeable);
+            }
+          }}
           className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-right transition ${
             form.isExchangeable
               ? "border-brand-200 bg-brand-50/70"

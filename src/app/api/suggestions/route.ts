@@ -3,33 +3,20 @@ import { suggestions } from "@/db/schema";
 import { getCurrentUser, isAdminUser } from "@/lib/auth";
 import { HttpError, isEmail, jsonError, readJsonBody, str, withDb } from "@/lib/http";
 import { listSuggestions } from "@/lib/queries";
+import { createRateLimiter, rateKey } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** جلوگیری ساده از ارسال انبوه پیام */
-const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 4;
-const buckets = new Map<string, { count: number; first: number }>();
-
-function isThrottled(key: string) {
-  const entry = buckets.get(key);
-  if (!entry) return false;
-  if (Date.now() - entry.first > WINDOW_MS) {
-    buckets.delete(key);
-    return false;
-  }
-  return entry.count >= MAX_PER_WINDOW;
-}
-
-function registerSend(key: string) {
-  const entry = buckets.get(key);
-  if (!entry || Date.now() - entry.first > WINDOW_MS) {
-    buckets.set(key, { count: 1, first: Date.now() });
-    return;
-  }
-  entry.count += 1;
-}
+/**
+ * جلوگیری از ارسال انبوه پیام.
+ *
+ * قبلاً کلید فقط «contact» بود و کاربر خودش آن را تعیین می‌کند، پس با هر بار
+ * عوض‌کردن ایمیل/شماره، محدودیت دور زده می‌شد؛ علاوه بر آن Map هرگز پاک
+ * نمی‌شد (نشت حافظه). اکنون کلید ترکیب IP + تماس است و پاکسازی دوره‌ای دارد.
+ */
+const contactLimiter = createRateLimiter({ windowMs: 60_000, max: 4 });
+const ipLimiter = createRateLimiter({ windowMs: 60_000, max: 8 });
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -76,11 +63,11 @@ export async function POST(request: Request) {
     return jsonError("متن پیشنهاد باید حداقل ۱۰ حرف باشد.", 422);
   }
 
-  const throttleKey = contact.toLowerCase();
-  if (isThrottled(throttleKey)) {
+  const contactKey = rateKey(request, contact);
+  const ipKey = rateKey(request, "suggestion");
+  if (contactLimiter.isLimited(contactKey) || ipLimiter.isLimited(ipKey)) {
     return jsonError("تعداد پیام‌های شما در این دقیقه زیاد است. کمی بعد دوباره تلاش کنید.", 429);
   }
-  registerSend(throttleKey);
 
   const { response } = await withDb(async () => {
     const [created] = await db
@@ -89,6 +76,8 @@ export async function POST(request: Request) {
       .returning({ id: suggestions.id, createdAt: suggestions.createdAt });
 
     if (!created) throw new HttpError("ثبت پیام انجام نشد. دوباره تلاش کنید.", 500);
+    contactLimiter.register(contactKey);
+    ipLimiter.register(ipKey);
     return { suggestion: created };
   });
 

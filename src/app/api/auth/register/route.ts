@@ -1,11 +1,21 @@
 import { eq, or } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSession, hashPassword, publicUser, type SessionUser } from "@/lib/auth";
+import {
+  createSession,
+  hashPassword,
+  passwordProblem,
+  publicUser,
+  type SessionUser,
+} from "@/lib/auth";
 import { HttpError, jsonError, readJsonBody, str, withDb } from "@/lib/http";
+import { createRateLimiter, rateKey } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** حداکثر ۵ ثبت‌نام در ۱۰ دقیقه از هر IP — جلوگیری از ساخت انبوه حساب. */
+const registerLimiter = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 5 });
 
 type Payload = {
   fullName?: unknown;
@@ -38,11 +48,17 @@ export async function POST(request: Request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
     return jsonError("ایمیل وارد شده معتبر نیست.", 422);
   }
-  if (password.length < 6) {
-    return jsonError("رمز عبور باید حداقل ۶ کاراکتر باشد.", 422);
+  const weakPassword = passwordProblem(password);
+  if (weakPassword) {
+    return jsonError(weakPassword, 422);
   }
   if (studentCode && !/^[\d\u06F0-\u06F9-]{4,20}$/.test(studentCode)) {
     return jsonError("شماره دانشجویی باید ۴ تا ۲۰ رقم باشد.", 422);
+  }
+
+  const ipKey = rateKey(request, "register");
+  if (registerLimiter.isLimited(ipKey)) {
+    return jsonError("تعداد ثبت‌نام‌ها از این دستگاه زیاد است. کمی بعد دوباره تلاش کنید.", 429);
   }
 
   // ---- 2. all DB work runs through withDb → readable errors, no 500s ----
@@ -94,6 +110,7 @@ export async function POST(request: Request) {
         createdAt: users.createdAt,
       });
 
+    registerLimiter.register(ipKey);
     await createSession(created.id);
     return { user: publicUser(created as SessionUser) };
   });

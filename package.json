@@ -1,12 +1,16 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "daneshbook",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:seed": "node scripts/seed.mjs",
+    "db:set-admin": "node scripts/set-admin.mjs"
   },
   "dependencies": {
     "dotenv": "17.3.1",
@@ -28,5 +32,7 @@
     "postcss": "8.5.8",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3"
-  }
+  },
+  "version": "1.0.0",
+  "description": "دانش‌بوک — بازار دانشجویی کتاب، جزوه و فایل‌های درسی (Next.js + PostgreSQL)"
 }

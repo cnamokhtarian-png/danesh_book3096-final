@@ -99,7 +99,7 @@ export default function AuthForm({ mode, next }: { mode: Mode; next?: string }) 
         </div>
       </Field>
 
-      <Field label="رمز عبور" hint={isRegister ? "حداقل ۶ کاراکتر" : undefined}>
+      <Field label="رمز عبور" hint={isRegister ? "حداقل ۸ کاراکتر" : undefined}>
         <div className="relative">
           <Icon
             name="lock"

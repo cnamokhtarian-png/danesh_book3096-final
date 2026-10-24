@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   applicationName: "دانش‌بوک",
 };
 
+/**
+ * همه صفحه‌ها در هر درخواست رندر می‌شوند.
+ * دلیل: layout وضعیت نشست را از کوکی می‌خواند و با تغییر DATABASE_URL روی
+ * هاست، هر صفحه‌ی کش‌شده‌ی قدیمی رفتار ناهماهنگ می‌داد (500 های پراکنده).
+ */
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   themeColor: "#5b4de0",
   width: "device-width",

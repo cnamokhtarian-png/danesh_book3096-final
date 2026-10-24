@@ -4,9 +4,13 @@ import { books, requests, users } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { HttpError, jsonError, readJsonBody, str, toInt, withDb } from "@/lib/http";
 import { listUserRequests } from "@/lib/queries";
+import { createRateLimiter, rateKey } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** حداکثر ۲۰ درخواست در ساعت برای هر کاربر. */
+const requestLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 20 });
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -39,6 +43,11 @@ export async function POST(request: Request) {
   if (!bookId) return jsonError("کتاب مورد نظر مشخص نشده است.", 422);
   if (message && message.length < 5) {
     return jsonError("پیام شما کوتاه است؛ حداقل ۵ حرف بنویسید.", 422);
+  }
+
+  const userKey = rateKey(request, `user:${user.id}`);
+  if (requestLimiter.isLimited(userKey)) {
+    return jsonError("تعداد درخواست‌های شما در این ساعت زیاد است. کمی بعد دوباره تلاش کنید.", 429);
   }
 
   const { response } = await withDb(async () => {
@@ -89,6 +98,7 @@ export async function POST(request: Request) {
       })
       .returning();
 
+    requestLimiter.register(userKey);
     return { request: created };
   });
 
@@ -122,8 +132,10 @@ export async function PATCH(request: Request) {
         ownerId: requests.ownerId,
         userId: requests.userId,
         status: requests.status,
+        bookStatus: books.status,
       })
       .from(requests)
+      .innerJoin(books, eq(books.id, requests.bookId))
       .where(eq(requests.id, id))
       .limit(1);
 
@@ -133,6 +145,11 @@ export async function PATCH(request: Request) {
     }
     if (found.status !== "pending") {
       throw new HttpError("این درخواست قبلاً پاسخ داده شده است.", 409);
+    }
+    // اگر آگهی پیش‌تر (توسط همین صاحب یا در جای دیگر) مبادله/غیرفعال شده باشد،
+    // پذیرش دوباره نباید کارما و وضعیت را جابه‌جا کند.
+    if (action === "accept" && found.bookStatus !== "available") {
+      throw new HttpError("این آگهی دیگر فعال نیست و قابل پذیرش نیست.", 409);
     }
 
     if (action === "decline") {

@@ -73,7 +73,9 @@ export async function listBooks(filters: BookFilters = {}): Promise<BookCardData
     const conditions: SQL[] = [];
 
     if (filters.q) {
-      const needle = `%${filters.q.trim()}%`;
+      // % و _ ورودی کاربر کاراکتر وحشی regex نباشند (تزریق SQL نیست، اما جستجو را خراب می‌کرد).
+      const safeTerm = filters.q.trim().replace(/[\\%_]/g, "\\$&");
+      const needle = `%${safeTerm}%`;
       const search = or(
         ilike(books.title, needle),
         ilike(books.course, needle),
@@ -108,6 +110,41 @@ export async function listBooks(filters: BookFilters = {}): Promise<BookCardData
   } catch (error) {
     console.error("[daneshbook:query] listBooks failed:", (error as Error).message);
     return [];
+  }
+}
+
+/**
+ * گزینه‌های فیلتر (دانشگاه‌ها و درس‌ها) که واقعاً در دیتابیس وجود دارند.
+ * برای فیلترهای پویا در صفحه /books استفاده می‌شود و در خطا آرایه خالی
+ * برمی‌گرداند تا صفحه هرگز به ۵۰۰ تبدیل نشود.
+ */
+export async function listFilterOptions(): Promise<{ universities: string[]; courses: string[] }> {
+  try {
+    const [universityRows, courseRows] = await Promise.all([
+      db
+        .selectDistinct({ value: books.university })
+        .from(books)
+        .where(ne(books.university, ""))
+        .orderBy(books.university)
+        .limit(40),
+      db
+        .selectDistinct({ value: books.course })
+        .from(books)
+        .where(ne(books.course, ""))
+        .orderBy(books.course)
+        .limit(60),
+    ]);
+
+    const clean = (values: (string | null)[]): string[] =>
+      values.flatMap((value) => (value?.trim() ? [value.trim()] : []));
+
+    return {
+      universities: clean(universityRows.map((row) => row.value)),
+      courses: clean(courseRows.map((row) => row.value)),
+    };
+  } catch (error) {
+    console.error("[daneshbook:query] listFilterOptions failed:", (error as Error).message);
+    return { universities: [], courses: [] };
   }
 }
 
@@ -158,12 +195,15 @@ export async function getStats(): Promise<PlatformStats> {
       })
       .from(books);
     const [studentRow] = await db.select({ total: sql<number>`count(*)` }).from(users);
+    // جدول suggestions ممکن است هنوز ساخته نشده باشد؛ نبود آن نباید آمار کل
+    // صفحه اصلی را صفر کند (قبلاً یک جدول غایب همه آمار را صفر می‌کرد).
     const [sugRow] = await db
       .select({
         total: sql<number>`count(*)`,
         fresh: sql<number>`count(*) filter (where ${suggestions.status} = 'new')`,
       })
-      .from(suggestions);
+      .from(suggestions)
+      .catch(() => [{ total: 0, fresh: 0 }]);
     return {
       books: Number(row?.books ?? 0),
       notes: Number(row?.notes ?? 0),
@@ -381,6 +421,10 @@ export async function listUsersForAdmin(): Promise<AdminUserRow[]> {
   }
 }
 
+/**
+ * شمارش بازدید. فقط برای بازدیدکننده‌ی غیرصاحب آگهی صدا زده می‌شود و هرگز
+ * خطا را بالا نمی‌دهد (شمارش بازدید نباید صفحه را بشکند).
+ */
 export async function bumpViews(id: number): Promise<void> {
   try {
     await db
