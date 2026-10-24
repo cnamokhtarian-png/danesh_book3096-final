@@ -750,12 +750,175 @@ def cmd_selftest():
     return 0 if ok else 1
 
 
+# --------------------------------------------------------------- منوی ساده
+PROFILES = {
+    "1": ("محافظه‌کار (پیشنهادی)", {"MAX_POSITION_PCT": "3", "STOP_LOSS_PCT": "2.5",
+                                     "TAKE_PROFIT_PCT": "5", "MAX_TRADES_PER_DAY": "4",
+                                     "COOLDOWN_MINUTES": "120", "MAX_DAILY_LOSS_PCT": "2"}),
+    "2": ("متعادل", {"MAX_POSITION_PCT": "5", "STOP_LOSS_PCT": "2",
+                     "TAKE_PROFIT_PCT": "4", "MAX_TRADES_PER_DAY": "8",
+                     "COOLDOWN_MINUTES": "30", "MAX_DAILY_LOSS_PCT": "3"}),
+}
+
+
+def ask(prompt=""):
+    try:
+        return input(prompt).strip()
+    except EOFError:
+        return ""
+
+
+def banner():
+    print("")
+    print("=====================================================")
+    print("            ربات معامله‌گر — منوی اصلی")
+    print("=====================================================")
+    print("  1) نمایش نمونه  (بدون اینترنت، بدون پول)")
+    print("  2) شروع تمرینی  (پیشنهاد ما — پول واقعی در خطر نیست)")
+    print("  3) اتصال کلید API و شروع واقعی")
+    print("  4) وضعیت حساب")
+    print("  5) توقف اضطراری")
+    print("  6) خروج")
+    print("=====================================================")
+
+
+def write_profile(env, profile_key):
+    env = dict(env)
+    for key, value in PROFILES[profile_key][1].items():
+        env[key] = value
+    save_env(env)
+    return env
+
+
+def clear_stop():
+    try:
+        if os.path.exists(STOP_PATH):
+            os.remove(STOP_PATH)
+            print("(توقف اضطراری قبلی برداشته شد.)")
+    except OSError:
+        pass
+
+
+def start_paper():
+    clear_stop()
+    env = load_env()
+    env["MODE"] = "paper"
+    env["CONFIRM"] = ""
+    save_env(env)
+    print("")
+    print("حالت تمرینی شروع شد. پول واقعی در خطر نیست.")
+    print("برای توقف: کلیدهای Ctrl و C را با هم بزنید.")
+    print("")
+    return cmd_run(env)
+
+
+def start_live():
+    clear_stop()
+    env = load_env()
+    print("")
+    print("!!!!  توجه  !!!!")
+    print("از این لحظه سفارش‌ها با پول واقعی حساب شما ثبت می‌شوند.")
+    print("فقط مبلغی را در حساب نگه دارید که از دست دادنش برایتان مهم نیست.")
+    print("کلید API باید فقط مجوز «مشاهده + معامله» داشته باشد و «برداشت» خاموش باشد.")
+    print("")
+    answer = ask("ادامه می‌دهید؟ (بله / خیر): ")
+    if answer not in ("بله", "بلي", "بلی", "yes", "y", "1"):
+        print("لغو شد. هیچ تغییری انجام نشد.")
+        return 0
+
+    token = ""
+    for attempt in range(3):
+        token = ask("کلید API را Paste کنید و Enter بزنید (چیزی نمایش داده نمی‌شود): ")
+        if not token:
+            print("کلیدی وارد نشد.")
+            continue
+        env["NOBITEX_TOKEN"] = token
+        print("در حال بررسی کلید... (وارد شدن به حساب)")
+        try:
+            market = Nobitex(env)
+            balances = market.balances()
+        except BotError as exc:
+            print("❌ %s" % exc)
+            print("   یعنی یا کلید اشتباه است، یا اینترنت/دسترسی به نوبیتکس مشکل دارد.")
+            continue
+        quote = market.quote
+        print("✅ کلید درست است. موجودی آزاد: %s %s" % (fmt(balances.get(quote, 0)), quote))
+        break
+    else:
+        print("کلید تأیید نشد؛ برنامه متوقف شد. هیچ معامله‌ای انجام نشد.")
+        return 2
+
+    symbol = ask("نام بازار (Enter = %s): " % env.get("SYMBOL", "BTCIRT")) or env.get("SYMBOL", "BTCIRT")
+    try:
+        split_symbol(symbol)
+    except BotError as exc:
+        print("❌ %s" % exc)
+        return 2
+    env["SYMBOL"] = symbol.upper()
+
+    print("")
+    print("سطح ریسک را انتخاب کنید:")
+    for key, (label, _) in PROFILES.items():
+        print("  %s) %s" % (key, label))
+    profile = ask("انتخاب (Enter = 1): ") or "1"
+    while profile not in PROFILES:
+        profile = ask("فقط 1 یا 2 را بزنید: ") or "1"
+
+    print("")
+    print("برای شروع واقعی، کلمه‌ی «تایید» را تایپ کنید.")
+    if ask("تایید: ") not in ("تایید", "تأیید", "confirm"):
+        print("تأیید نشد. هیچ تغییری انجام نشد.")
+        return 0
+
+    env["MODE"] = "live"
+    env["CONFIRM"] = CONFIRM_PHRASE
+    env = write_profile(env, profile)
+    save_env(env)
+    print("")
+    print("✅ تنظیمات ذخیره شد: حالت واقعی | %s | سطح %s" % (env["SYMBOL"], PROFILES[profile][0]))
+    print("ربات شروع می‌شود. برای توقف: Ctrl + C")
+    print("")
+    return cmd_run(env)
+
+
+def menu():
+    while True:
+        banner()
+        choice = ask("شماره را بزنید و Enter: ")
+        if choice == "1":
+            cmd_demo(load_env())
+        elif choice == "2":
+            return start_paper()
+        elif choice == "3":
+            return start_live()
+        elif choice == "4":
+            cmd_status(load_env())
+        elif choice == "5":
+            with open(STOP_PATH, "w", encoding="utf-8") as handle:
+                handle.write("توقف اضطراری\n")
+            print("⛔ توقف فعال شد. ربات دیگر معامله نمی‌کند.")
+            print("   برای روشن کردن دوباره: همین منو، گزینه 2 یا 3.")
+        elif choice in ("6", ""):
+            print("خداحافظ.")
+            return 0
+        else:
+            print("فقط یکی از شماره‌های 1 تا 6 را بزنید.")
+        ask("\nبرای ادامه Enter بزنید...")
+
+
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="ربات معامله‌گر تک‌فایلی (پیش‌فرض: تمرینی)")
+    if os.name == "nt":
+        for stream in (sys.stdout, sys.stderr):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+    parser = argparse.ArgumentParser(description="ربات معامله‌گر تک‌فایلی (پیش‌فرض: منو)")
     parser.add_argument(
         "command", nargs="?",
-        default="help",
-        choices=["demo", "check", "once", "run", "status", "panic", "resume", "selftest", "init", "help"],
+        default="menu",
+        choices=["menu", "demo", "check", "once", "run", "status", "panic", "resume",
+                 "selftest", "init", "help", "live"],
     )
     args = parser.parse_args(argv)
     env = load_env()
@@ -763,6 +926,10 @@ def main(argv=None):
     if args.command == "help":
         print(__doc__)
         return 0
+    if args.command == "menu":
+        return menu()
+    if args.command == "live":
+        return start_live()
     if args.command == "init":
         if os.path.exists(ENV_PATH):
             print("فایل bot.env از قبل هست؛ تغییری ندادم. برای ساخت دوباره حذفش کنید.")

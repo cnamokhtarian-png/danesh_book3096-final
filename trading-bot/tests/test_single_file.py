@@ -111,3 +111,102 @@ def test_stop_switch_prevents_trading(bot, tmp_path, monkeypatch):
 
 def test_selftest_passes(bot):
     assert bot.cmd_selftest() == 0
+
+
+# ---------------------------------------------------------------- منو و ویزارد
+def _fresh(bot, monkeypatch, tmp_path):
+    monkeypatch.setattr(bot, "ENV_PATH", str(tmp_path / "bot.env"))
+    monkeypatch.setattr(bot, "STATE_PATH", str(tmp_path / "state.json"))
+    monkeypatch.setattr(bot, "STOP_PATH", str(tmp_path / "STOP"))
+    monkeypatch.setattr(bot, "LOG_PATH", str(tmp_path / "bot.log"))
+
+
+def _feed(monkeypatch, answers):
+    queue = list(answers)
+
+    def fake_input(prompt=""):
+        return queue.pop(0) if queue else ""
+
+    monkeypatch.setattr("builtins.input", fake_input)
+
+
+def test_menu_exits_on_6(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    _feed(monkeypatch, ["6"])
+    assert bot.menu() == 0
+
+
+def test_menu_rejects_unknown_then_exits(bot, monkeypatch, tmp_path, capsys):
+    _fresh(bot, monkeypatch, tmp_path)
+    _feed(monkeypatch, ["9", "", "6"])
+    assert bot.menu() == 0
+    assert "1 تا 6" in capsys.readouterr().out
+
+
+def test_menu_panic_creates_stop_file(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    _feed(monkeypatch, ["5", "", "6"])
+    assert bot.menu() == 0
+    assert (tmp_path / "STOP").exists()
+
+
+def test_start_live_cancel_changes_nothing(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    _feed(monkeypatch, ["خیر"])
+    assert bot.start_live() == 0
+    assert not (tmp_path / "bot.env").exists()
+
+
+def test_start_live_rejects_wrong_confirm_word(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    monkeypatch.setattr(bot.Nobitex, "balances", lambda self: {"IRT": 5_000_000.0, "BTC": 0.0})
+    _feed(monkeypatch, ["بله", "tok-123", "", "1", "نه"])
+    assert bot.start_live() == 0
+    assert not (tmp_path / "bot.env").exists()
+
+
+def test_start_live_full_success(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    monkeypatch.setattr(bot.Nobitex, "balances", lambda self: {"IRT": 5_000_000.0, "BTC": 0.0})
+    monkeypatch.setattr(bot, "cmd_run", lambda env, once=False: 0)
+    _feed(monkeypatch, ["بله", "tok-123456", "BTCIRT", "1", "تایید"])
+    assert bot.start_live() == 0
+    env = bot.load_env()
+    assert env["MODE"] == "live"
+    assert env["CONFIRM"] == bot.CONFIRM_PHRASE
+    assert env["NOBITEX_TOKEN"] == "tok-123456"
+    assert env["MAX_POSITION_PCT"] == "3"
+
+
+def test_start_live_gives_up_after_three_bad_keys(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+
+    def boom(self):
+        raise bot.BotError("کلید نامعتبر")
+
+    monkeypatch.setattr(bot.Nobitex, "balances", boom)
+    _feed(monkeypatch, ["بله", "bad1", "bad2", "bad3"])
+    assert bot.start_live() == 2
+    assert not (tmp_path / "bot.env").exists()
+
+
+def test_start_paper_saves_paper_mode_and_clears_stop(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    (tmp_path / "STOP").write_text("stop", encoding="utf-8")
+    seen = {}
+
+    def fake_run(env, once=False):
+        seen["mode"] = env["MODE"]
+        return 0
+
+    monkeypatch.setattr(bot, "cmd_run", fake_run)
+    assert bot.start_paper() == 0
+    assert seen["mode"] == "paper"
+    assert not (tmp_path / "STOP").exists()
+    assert bot.load_env()["MODE"] == "paper"
+
+
+def test_default_command_is_menu(bot, monkeypatch, tmp_path):
+    _fresh(bot, monkeypatch, tmp_path)
+    _feed(monkeypatch, ["6"])
+    assert bot.main([]) == 0
