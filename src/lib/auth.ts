@@ -175,7 +175,9 @@ export function publicUser(user: SessionUser) {
  */
 export function passwordProblem(password: string): string | null {
   if (password.length < PASSWORD_MIN_LENGTH) {
-    return `رمز عبور باید حداقل ${PASSWORD_MIN_LENGTH} کاراکتر باشد.`;
+    // رقم فارسی برای هم‌خوانی با بقیه پیام‌ها
+    const fa = PASSWORD_MIN_LENGTH.toLocaleString("fa-IR");
+    return `رمز عبور باید حداقل ${fa} کاراکتر باشد.`;
   }
   if (password.length > 200) {
     return "رمز عبور بیش از حد طولانی است.";

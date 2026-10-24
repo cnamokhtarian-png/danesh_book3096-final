@@ -37,6 +37,7 @@ npm run dev
 | `npm run db:generate` | تولید SQL مهاجرت در `drizzle/` (برای محیط تولید) |
 | `npm run db:set-admin` | ساخت/ارتقای حساب مدیر — فقط یک ردیف را upsert می‌کند |
 | `npm run db:seed` | داده نمونه برای توسعه (`ALLOW_SEED=1` برای محیط تولید) |
+| `npm run reset-link -- <email>` | ساخت دستی لینک بازیابی رمز (وقتی سرویس ایمیل ندارید) |
 
 ## ساخت حساب مدیر
 
@@ -55,11 +56,36 @@ DATABASE_URL='postgresql://…' ADMIN_USERNAME='<نام-کاربری-مدیر>' 
 update users set role = 'admin' where email = 'sins1996@daneshbook.local';
 ```
 
+## بازیابی رمز عبور
+
+مسیر کاربر: `/login` → «رمز عبور را فراموش کرده‌اید؟» → `/forgot-password` → ایمیل حاوی لینک → `/reset-password`.
+
+- توکن ۳۲ بایتی تصادفی است و **فقط هش SHA-256 آن** در جدول `passwordResets` ذخیره می‌شود.
+- یک‌بارمصرف و با اعتبار ۴۵ دقیقه؛ با هر درخواست جدید، لینک‌های قبلی باطل می‌شوند.
+- بعد از تغییر رمز، همه نشست‌های کاربر حذف می‌شود (خروج از دستگاه‌های دیگر).
+- پاسخ درخواست همیشه یکسان است تا وجود یا نبود ایمیل افشا نشود.
+- محدودیت: ۳ درخواست / ۱۵ دقیقه به‌ازای هر ایمیل + ۱۰ به‌ازای هر IP.
+
+### فعال کردن ارسال ایمیل
+
+```env
+RESEND_API_KEY=re_...
+MAIL_FROM=دانش‌بوک <no-reply@your-domain.com>
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+```
+
+بدون این کلید، ارسال انجام نمی‌شود؛ در محیط توسعه لینک مستقیماً در پاسخ API/لاگ چاپ می‌شود و در تولید می‌توانید با دستور زیر لینک را دستی بسازید و به کاربر بدهید:
+
+```bash
+DATABASE_URL='postgresql://…' SITE_URL='https://your-domain.com' npm run reset-link -- user@example.com
+```
+
 ## استقرار
 
 - `DATABASE_URL` را در محیط هاست تنظیم کنید (نه در فایل کامیت‌شده).
 - `NODE_ENV=production` باشد تا کوکی نشست `Secure` شود (نیازمند HTTPS).
 - برای تغییر schema، به‌جای `db:push` از `db:generate` + مهاجرت بازبینی‌شده استفاده کنید تا داده‌ای حذف نشود.
+- قابلیت بازیابی رمز به جدول جدید `passwordResets` نیاز دارد (فقط `CREATE TABLE`، بدون تغییر داده‌های موجود): یک بار `npm run db:push`.
 - `/api/health` → `{ ok: true, configured: true }` با ۲۰۰؛ اگر دیتابیس در دسترس نباشد ۵۰۳.
 
 ## پیکربندی امنیتی

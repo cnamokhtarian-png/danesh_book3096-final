@@ -156,6 +156,33 @@ export const suggestions = pgTable(
   (table) => [index("suggestions_createdAt_idx").on(table.createdAt)],
 );
 
+/**
+ * توکن‌های بازیابی رمز عبور.
+ *
+ * فقط هش SHA-256 توکن ذخیره می‌شود، نه خود توکن؛ بنابراین لو رفتن دیتابیس
+ * امکان بازنشانی رمز حساب‌های دیگر را نمی‌دهد. هر ردیف یک‌بارمصرف است
+ * (`usedAt`) و تاریخ انقضا دارد.
+ *
+ * این جدول جدید و افزایشی است؛ ساختنش هیچ جدول یا ستونی را تغییر نمی‌دهد.
+ */
+export const passwordResets = pgTable(
+  "passwordResets",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
+    usedAt: timestamp("usedAt", { withTimezone: true }),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("passwordResets_tokenHash_unique").on(table.tokenHash),
+    index("passwordResets_userId_idx").on(table.userId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type Book = typeof books.$inferSelect;
 export type Request = typeof requests.$inferSelect;

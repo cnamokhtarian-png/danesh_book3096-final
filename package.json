@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:seed": "node scripts/seed.mjs",
-    "db:set-admin": "node scripts/set-admin.mjs"
+    "db:set-admin": "node scripts/set-admin.mjs",
+    "reset-link": "node scripts/reset-link.mjs"
   },
   "dependencies": {
     "dotenv": "17.3.1",

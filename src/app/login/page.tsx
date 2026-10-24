@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import AuthForm from "@/components/AuthForm";
 import { Icon } from "@/components/Icon";
@@ -56,6 +57,15 @@ export default async function LoginPage({ searchParams }: Props) {
           ایمیل و رمز عبور خود را وارد کنید.
         </p>
         <AuthForm mode="login" next={nextParam} />
+
+        <div className="mt-3 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-[12.5px] font-bold text-brand-600 transition hover:text-brand-700 hover:underline"
+          >
+            رمز عبور را فراموش کرده‌اید؟
+          </Link>
+        </div>
 
         {/* فقط در محیط توسعه نمایش داده می‌شود؛ در تولید این بلوک حذف است. */}
         {process.env.NODE_ENV !== "production" && (
