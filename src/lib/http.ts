@@ -98,8 +98,10 @@ function describeDbError(error: unknown): { message: string; status: number } {
     case "23514":
       return { message: "مقادیر وارد شده با قوانین دیتابیس هم‌خوانی ندارد.", status: 400 };
     case "42P01":
+      // پیام کاربرپسند؛ جزئیات (نام جدول و دستور مهاجرت) فقط در لاگ سرور می‌ماند.
+      console.error("[daneshbook:api] جدول مورد نیاز وجود ندارد:", firstString(chain, "message"));
       return {
-        message: "جدول‌های دیتابیس ساخته نشده‌اند. دستور drizzle-kit push را اجرا کنید.",
+        message: "این بخش هنوز در دیتابیس آماده نشده است. لطفاً کمی بعد دوباره تلاش کنید.",
         status: 503,
       };
     case "ECONNREFUSED":

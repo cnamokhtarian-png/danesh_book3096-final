@@ -66,6 +66,23 @@ update users set role = 'admin' where email = 'sins1996@daneshbook.local';
 - پاسخ درخواست همیشه یکسان است تا وجود یا نبود ایمیل افشا نشود.
 - محدودیت: ۳ درخواست / ۱۵ دقیقه به‌ازای هر ایمیل + ۱۰ به‌ازای هر IP.
 
+### فعال کردن جدول بازیابی رمز (یک بار)
+
+اگر در صفحه «فراموشی رمز» پیام *«سرویس بازیابی رمز در حال آماده‌سازی است»* دیدید، یعنی جدول
+`passwordResets` روی دیتابیس ساخته نشده است. یکی از دو راه:
+
+**راه ۱ — SQL Editor سوپابیس (سریع‌ترین، بدون نصب):** محتوای
+[`scripts/sql/001-password-resets.sql`](./scripts/sql/001-password-resets.sql) را paste و Run کنید.
+این اسکریپت `IF NOT EXISTS` است، فقط همین یک جدول را می‌سازد و به هیچ داده‌ای دست نمی‌زند.
+
+**راه ۲ — از خط فرمان:**
+
+```bash
+DATABASE_URL='postgresql://…' npm run db:push        # فقط جدول جدید را می‌سازد
+# یا اجرای مستقیم همان SQL:
+DATABASE_URL='postgresql://…' npm run db:create-reset-table
+```
+
 ### فعال کردن ارسال ایمیل
 
 ```env

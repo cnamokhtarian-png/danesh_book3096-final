@@ -11,7 +11,8 @@
     "db:generate": "drizzle-kit generate",
     "db:seed": "node scripts/seed.mjs",
     "db:set-admin": "node scripts/set-admin.mjs",
-    "reset-link": "node scripts/reset-link.mjs"
+    "reset-link": "node scripts/reset-link.mjs",
+    "db:create-reset-table": "node scripts/run-sql.mjs scripts/sql/001-password-resets.sql"
   },
   "dependencies": {
     "dotenv": "17.3.1",

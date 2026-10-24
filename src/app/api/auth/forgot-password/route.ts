@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { jsonError, readJsonBody, str, withDb } from "@/lib/http";
+import { HttpError, jsonError, readJsonBody, str, withDb } from "@/lib/http";
 import { resetMailContent, sendMail, siteUrl } from "@/lib/mail";
 import { issueResetToken, RESET_TTL_MINUTES } from "@/lib/password-reset";
 import { createRateLimiter, rateKey } from "@/lib/rate-limit";
@@ -60,7 +60,23 @@ export async function POST(request: Request) {
     // ایمیل ناموجود: همان پاسخ عمومی، بدون ساخت توکن و بدون افشای وجود حساب.
     if (!found) return { message: GENERIC };
 
-    const { token } = await issueResetToken(found.id);
+    let token: string;
+    try {
+      token = (await issueResetToken(found.id)).token;
+    } catch (error) {
+      const code = (error as { code?: string; cause?: { code?: string } }).code
+        ?? (error as { cause?: { code?: string } }).cause?.code;
+      if (code === "42P01") {
+        console.error(
+          "[daneshbook:reset] جدول passwordResets ساخته نشده است. scripts/sql/001-password-resets.sql را اجرا کنید.",
+        );
+        throw new HttpError(
+          "سرویس بازیابی رمز در حال آماده‌سازی است. لطفاً بعداً تلاش کنید یا از فرم پشتیبانی پیام دهید.",
+          503,
+        );
+      }
+      throw error;
+    }
     const link = `${siteUrl(request)}/reset-password?token=${token}`;
 
     const mail = resetMailContent(found.fullName, link, RESET_TTL_MINUTES);
