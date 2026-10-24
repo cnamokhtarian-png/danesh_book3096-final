@@ -5,6 +5,7 @@ import { BookCardGrid } from "@/components/BookCard";
 import { Icon } from "@/components/Icon";
 import JsonLd from "@/components/JsonLd";
 import RequestForm from "@/components/RequestForm";
+import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -268,6 +269,8 @@ export default async function BookDetailPage({ params }: PageProps) {
             isLoggedIn={Boolean(user)}
             isOwner={isOwner}
           />
+
+          <ShareButton title={book.title} path={`/books/${book.id}`} />
         </aside>
       </div>
 
