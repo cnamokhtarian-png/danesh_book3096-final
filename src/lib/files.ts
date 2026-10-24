@@ -162,6 +162,8 @@ export async function saveExternalLink(input: {
   ownerId: number;
   fileName: string;
   externalUrl: string;
+  mimeType?: string;
+  sizeBytes?: number;
 }): Promise<BookFileMeta> {
   await ensureFileSchema();
   const [row] = await db
@@ -169,8 +171,8 @@ export async function saveExternalLink(input: {
     .values({
       ownerId: input.ownerId,
       fileName: input.fileName,
-      mimeType: "text/uri-list",
-      sizeBytes: 0,
+      mimeType: input.mimeType ?? "text/uri-list",
+      sizeBytes: input.sizeBytes ?? 0,
       storage: "link",
       externalUrl: input.externalUrl,
     })

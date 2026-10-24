@@ -1,18 +1,19 @@
 /**
  * محتوای نمونه برای پر کردن سایت در روزهای اول.
  *
- * چرا این فایل وجود دارد؟
- * یک بازار خالی هیچ‌وقت خریدار جذب نمی‌کند. این داده‌ها چند دانشجوی نمونه و
- * چند آگهی واقعیِ فایل (با لینک به منابع آزاد و رایگان) می‌سازند تا صفحه‌ی
- * بازار و بخش فایل‌های دیجیتال «زنده» به‌نظر برسد.
+ * یک بازار خالی هیچ‌وقت خریدار جذب نمی‌کند. این فایل ۲۰ دانشجوی نمونه و
+ * ۲۳ آگهی می‌سازد که ۱۵ تای آن‌ها **فایل واقعی قابل دانلود** دارند:
  *
- * نکات مهم:
- *  - همه‌ی آدرس‌ها به منابع آزاد (MIT OpenCourseWare و OpenStax) اشاره می‌کنند
- *    و در توضیح هر آگهی هم منبع ذکر شده؛ بنابراین هیچ محتوای کپی‌رایتی یا
- *    گمراه‌کننده‌ای ساخته نمی‌شود.
+ *  - ۱۰ فایل PDF و ۵ فایل PowerPoint که در `public/samples/` خود سایت قرار
+ *    گرفته‌اند (از دوره‌های آزاد و رایگان گرفته شده‌اند و منبعشان در توضیح
+ *    هر آگهی ذکر شده است).
+ *  - ۸ آگهی کتاب فیزیکی با قیمت و توضیح واقعی.
+ *
+ * نکات:
+ *  - همه‌ی آگهی‌ها به نام یکی از همان ۲۰ کاربر ثبت می‌شوند.
  *  - اجرای دوباره‌ی این تابع داده‌ی تکراری نمی‌سازد (بر اساس ایمیل کاربر و
  *    عنوان آگهی چک می‌کند).
- *  - هیچ جدول یا ردیف موجودی تغییر نمی‌کند؛ فقط INSERT است.
+ *  - فقط INSERT است؛ هیچ ردیف یا جدول موجودی تغییر نمی‌کند.
  */
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
 import { promisify } from "node:util";
@@ -58,12 +59,15 @@ type DemoListing = {
   condition?: string;
   coverEmoji: string;
   description: string;
-  /** لینک به فایل آزاد و رایگان (اختیاری) */
-  file?: { url: string; label: string };
-  /** چند روز قبل منتشر شده باشد (برای طبیعی‌بودن ترتیب) */
+  /** فایل واقعی داخل خود سایت (public/samples) */
+  file?: { path: string; name: string; size: number; mime: string };
   daysAgo: number;
   views: number;
 };
+
+/* -------------------------------------------------------------------------- */
+/*                                   کاربران                                  */
+/* -------------------------------------------------------------------------- */
 
 const DEMO_USERS: DemoUser[] = [
   {
@@ -71,25 +75,25 @@ const DEMO_USERS: DemoUser[] = [
     email: "sara.mohammadi@daneshbook.local",
     university: "دانشگاه تهران",
     major: "مهندسی کامپیوتر",
-    avatarEmoji: "👩‍💻",
+    avatarEmoji: "👩",
     karmaPoints: 84,
-    bio: "ترم ۵ کامپیوتر، جزوه‌هام رو مرتب می‌نویسم و دوست دارم به بقیه هم برسه.",
+    bio: "ترم ۵ کامپیوتر؛ جزوه‌هام رو مرتب می‌نویسم و دوست دارم به بقیه هم برسه.",
   },
   {
     fullName: "امیرحسین کریمی",
     email: "amirhossein.karimi@daneshbook.local",
     university: "دانشگاه صنعتی شریف",
     major: "مهندسی برق",
-    avatarEmoji: "🧑‍🔧",
+    avatarEmoji: "🧑",
     karmaPoints: 61,
-    bio: "برق — قدرت. کتاب‌های ترم‌های قبل رو می‌فروشم تا جای بیشتری برای کتاب‌های جدید باز بشه.",
+    bio: "برق — قدرت. کتاب‌های ترم‌های قبل رو می‌فروشم تا جا برای کتاب‌های جدید باز بشه.",
   },
   {
     fullName: "نگار رضایی",
     email: "negar.rezaei@daneshbook.local",
     university: "دانشگاه علوم پزشکی تهران",
     major: "پزشکی",
-    avatarEmoji: "🩺",
+    avatarEmoji: "👩",
     karmaPoints: 47,
     bio: "پزشکی، ترم ۳. بیشتر جزوه و نمونه سوال آپلود می‌کنم.",
   },
@@ -98,168 +102,473 @@ const DEMO_USERS: DemoUser[] = [
     email: "mohammadreza.ahmadi@daneshbook.local",
     university: "دانشگاه فردوسی مشهد",
     major: "ریاضی کاربردی",
-    avatarEmoji: "🧑‍🏫",
+    avatarEmoji: "👨",
     karmaPoints: 39,
-    bio: "ریاضی و آمار؛ حل‌التمرین و جزوه‌های تمرین‌محور.",
+    bio: "ریاضی و آمار؛ جزوه‌های تمرین‌محور و حل‌التمرین.",
   },
   {
     fullName: "الهام صادقی",
     email: "elham.sadeghi@daneshbook.local",
     university: "دانشگاه علامه طباطبایی",
     major: "مدیریت بازرگانی",
-    avatarEmoji: "👩‍🎓",
+    avatarEmoji: "👩",
     karmaPoints: 28,
     bio: "مدیریت؛ خلاصه‌ی درس‌ها و اسلایدهای ارائه.",
   },
+  {
+    fullName: "پارسا نیک‌نام",
+    email: "parsa.niknam@daneshbook.local",
+    university: "دانشگاه صنعتی امیرکبیر",
+    major: "مهندسی کامپیوتر",
+    avatarEmoji: "🧑",
+    karmaPoints: 73,
+    bio: "برنامه‌نویسی و ساختمان داده؛ تدریس خصوصی هم می‌کنم.",
+  },
+  {
+    fullName: "زهرا موسوی",
+    email: "zahra.mousavi@daneshbook.local",
+    university: "دانشگاه الزهرا",
+    major: "آمار",
+    avatarEmoji: "👩",
+    karmaPoints: 55,
+    bio: "آمار و احتمال؛ عاشق خلاصه‌نویسی مرتب.",
+  },
+  {
+    fullName: "کیان رستمی",
+    email: "kian.rostami@daneshbook.local",
+    university: "دانشگاه علم و صنعت",
+    major: "مهندسی صنایع",
+    avatarEmoji: "👨",
+    karmaPoints: 34,
+    bio: "مهندسی صنایع؛ تحلیل داده و بهینه‌سازی.",
+  },
+  {
+    fullName: "مهسا شریفی",
+    email: "mahsa.sharifi@daneshbook.local",
+    university: "دانشگاه شهید بهشتی",
+    major: "حقوق",
+    avatarEmoji: "👩",
+    karmaPoints: 41,
+    bio: "حقوق؛ جزوه‌های متون فقه و حقوق مدنی.",
+  },
+  {
+    fullName: "سینا فتحی",
+    email: "sina.fathi@daneshbook.local",
+    university: "دانشگاه صنعتی خواجه نصیر",
+    major: "مهندسی مکانیک",
+    avatarEmoji: "🧑",
+    karmaPoints: 22,
+    bio: "مکانیک — حرارت و سیالات.",
+  },
+  {
+    fullName: "نیلوفر باقری",
+    email: "niloofar.bagheri@daneshbook.local",
+    university: "دانشگاه شیراز",
+    major: "علوم کامپیوتر",
+    avatarEmoji: "👩",
+    karmaPoints: 66,
+    bio: "علوم کامپیوتر؛ یادگیری ماشین و پایتون.",
+  },
+  {
+    fullName: "علی صالحی",
+    email: "ali.salehi@daneshbook.local",
+    university: "دانشگاه تبریز",
+    major: "مهندسی عمران",
+    avatarEmoji: "👨",
+    karmaPoints: 19,
+    bio: "عمران؛ مقاومت مصالح و تحلیل سازه.",
+  },
+  {
+    fullName: "فاطمه حسینی",
+    email: "fatemeh.hosseini@daneshbook.local",
+    university: "دانشگاه اصفهان",
+    major: "شیمی",
+    avatarEmoji: "👩",
+    karmaPoints: 31,
+    bio: "شیمی کاربردی؛ آزمایشگاه و شیمی آلی.",
+  },
+  {
+    fullName: "آرمان یزدانی",
+    email: "arman.yazdani@daneshbook.local",
+    university: "دانشگاه تهران",
+    major: "اقتصاد",
+    avatarEmoji: "🧑",
+    karmaPoints: 25,
+    bio: "اقتصاد؛ آمار و اقتصاد سنجی.",
+  },
+  {
+    fullName: "یاسمن کریمی",
+    email: "yasaman.karimi@daneshbook.local",
+    university: "دانشگاه گیلان",
+    major: "معماری",
+    avatarEmoji: "👩",
+    karmaPoints: 37,
+    bio: "معماری؛ اسلایدهای ارائه و جزوه‌های طراحی.",
+  },
+  {
+    fullName: "حسین مرادی",
+    email: "hossein.moradi@daneshbook.local",
+    university: "دانشگاه ارومیه",
+    major: "مهندسی برق",
+    avatarEmoji: "👨",
+    karmaPoints: 44,
+    bio: "برق — الکترونیک و کنترل.",
+  },
+  {
+    fullName: "رعنا تقوی",
+    email: "rana.taghavi@daneshbook.local",
+    university: "دانشگاه فردوسی مشهد",
+    major: "ادبیات انگلیسی",
+    avatarEmoji: "👩",
+    karmaPoints: 29,
+    bio: "ادبیات انگلیسی؛ زبان عمومی و تخصصی.",
+  },
+  {
+    fullName: "بهنام اکبری",
+    email: "behnam.akbari@daneshbook.local",
+    university: "دانشگاه صنعتی اصفهان",
+    major: "مهندسی مواد",
+    avatarEmoji: "🧑",
+    karmaPoints: 33,
+    bio: "مهندسی مواد؛ متالورژی فیزیکی.",
+  },
+  {
+    fullName: "شیدا نوری",
+    email: "sheida.nouri@daneshbook.local",
+    university: "دانشگاه علوم پزشکی ایران",
+    major: "پرستاری",
+    avatarEmoji: "👩",
+    karmaPoints: 26,
+    bio: "پرستاری؛ جزوه‌های فیزیولوژی و آناتومی.",
+  },
+  {
+    fullName: "کاوه رحیمی",
+    email: "kaveh.rahimi@daneshbook.local",
+    university: "دانشگاه علامه طباطبایی",
+    major: "حسابداری",
+    avatarEmoji: "👨",
+    karmaPoints: 21,
+    bio: "حسابداری؛ اصول و حسابداری میانه.",
+  },
 ];
 
-/**
- * آگهی‌های نمونه. همه‌ی لینک‌ها به منابع آموزشی آزاد اشاره می‌کنند و منبع در
- * توضیح آگهی ذکر شده است.
- */
+const PDF_MIME = "application/pdf";
+const PPTX_MIME = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+const R_CREDIT = "منبع: مجموعه‌ی چیت‌شیت‌های آزاد Posit/RStudio (لایسنس CC BY 4.0) — نسخه‌ی اصلی در GitHub.";
+
+/* -------------------------------------------------------------------------- */
+/*                                   آگهی‌ها                                  */
+/* -------------------------------------------------------------------------- */
+
 const DEMO_LISTINGS: DemoListing[] = [
+  /* ------------------------- ۱۰ آگهی PDF ------------------------- */
   {
     ownerEmail: "sara.mohammadi@daneshbook.local",
-    title: "جزوه‌ی ساختمان داده و الگوریتم (کامل، ۲۴ جلسه)",
+    title: "چیت‌شیت برنامه‌نویسی R — از صفر تا تحلیل داده",
     kind: "note",
     category: "engineering",
-    course: "ساختمان داده‌ها",
-    author: "MIT OpenCourseWare",
+    course: "برنامه‌نویسی و تحلیل داده",
+    author: "Posit / RStudio",
     university: "دانشگاه تهران",
     price: 0,
     offerType: "free",
     coverEmoji: "📝",
     description:
-      "جزوه‌ی مرتب و کامل درس ساختمان داده‌ها؛ از پیچیدگی زمانی و مرتب‌سازی تا درخت‌ها، هش، گراف و برنامه‌نویسی پویا.\n\nاین نسخه بر اساس جزوه‌ی آزاد و رایگان درس 6.006 دانشگاه MIT تنظیم شده و برای آمادگی امتحان پایان‌ترم و مصاحبه‌های فنی عالی است.\n\nمنبع اصلی: MIT OpenCourseWare (رایگان و قابل استفاده با ذکر منبع).",
-    file: {
-      url: "https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/pages/lecture-notes/",
-      label: "جزوه‌ی ساختمان داده — MIT OCW",
-    },
-    daysAgo: 2,
-    views: 37,
+      "خلاصه‌ی دو صفحه‌ای و تصویری از همه‌ی دستورهای پایه‌ی R: ساختن بردار و دیتافریم، زیرمجموعه‌گیری، توابع، خواندن و نوشتن فایل.\n\nبرای کسی که تازه R را شروع کرده عالی است؛ کنار لپ‌تاپ بازش کن و همان‌جا تمرین کن.\n\n" +
+      R_CREDIT,
+    file: { path: "/samples/r-programming.pdf", name: "R-Cheatsheet.pdf", size: 204144, mime: PDF_MIME },
+    daysAgo: 1,
+    views: 46,
   },
   {
-    ownerEmail: "mohammadreza.ahmadi@daneshbook.local",
-    title: "فیزیک ۱ — کتاب مرجع آزاد دانشگاهی (جلد مکانیک)",
+    ownerEmail: "kian.rostami@daneshbook.local",
+    title: "خلاصه‌ی ورود و خواندن داده‌ها (Import Data) در R",
     kind: "note",
-    category: "basic",
-    course: "فیزیک عمومی ۱",
-    author: "OpenStax",
-    university: "دانشگاه فردوسی مشهد",
-    price: 0,
-    offerType: "free",
-    coverEmoji: "⚛️",
-    description:
-      "کتاب درسی فیزیک عمومی ۱ با پوشش کامل مکانیک، نوسان و موج — همراه با مثال‌های حل‌شده و تمرین پایان فصل.\n\nمناسب دانشجویان فنی و علوم پایه که دنبال یک مرجع انگلیسیِ ساده و تصویری هستند.\n\nمنبع اصلی: OpenStax University Physics Volume 1 (لایسنس آزاد CC BY).",
-    file: {
-      url: "https://d3bxy9euw4e147.cloudfront.net/oscms-prodcms/media/documents/UniversityPhysicsVolume1-LR.pdf",
-      label: "University Physics Vol. 1 — OpenStax",
-    },
-    daysAgo: 4,
-    views: 52,
-  },
-  {
-    ownerEmail: "sara.mohammadi@daneshbook.local",
-    title: "اسلایدهای هوش مصنوعی: از شبکه عصبی تا ترانسفورمر",
-    kind: "slide",
-    category: "engineering",
-    course: "هوش مصنوعی",
-    author: "Vaswani et al.",
-    university: "دانشگاه تهران",
+    category: "management",
+    course: "تحلیل داده",
+    author: "Posit / RStudio",
+    university: "دانشگاه علم و صنعت",
     price: 0,
     offerType: "free",
     coverEmoji: "📊",
     description:
-      "ارائه‌ی کلاسی درس هوش مصنوعی درباره‌ی معماری ترانسفورمر؛ مناسب برای کنفرانس درس و درک پایه‌ی مدل‌های زبانی امروزی.\n\nدر کنارش مقاله‌ی اصلی و رایگان «Attention Is All You Need» را هم می‌توانید بخوانید (لینک داخل همین آگهی).\n\nمنبع: arXiv (دسترسی آزاد).",
-    file: {
-      url: "https://arxiv.org/pdf/1706.03762",
-      label: "Attention Is All You Need — arXiv",
-    },
-    daysAgo: 6,
-    views: 41,
+      "همه‌ی راه‌های خواندن داده: CSV، اکسل، دیتابیس و API — با جدول معادل‌ها و توضیح تنظیمات هر تابع readr.\n\nمشکل «فایل اکسل را چطور بیاورم» در پروژه‌های درسی با همین یک فایل حل می‌شود.\n\n" +
+      R_CREDIT,
+    file: { path: "/samples/data-import.pdf", name: "Data-Import-Cheatsheet.pdf", size: 416128, mime: PDF_MIME },
+    daysAgo: 2,
+    views: 33,
   },
   {
-    ownerEmail: "negar.rezaei@daneshbook.local",
-    title: "نمونه سوال‌های ریاضی عمومی ۱ با پاسخ تشریحی",
-    kind: "exam",
-    category: "basic",
-    course: "ریاضی عمومی ۱",
-    university: "دانشگاه علوم پزشکی تهران",
-    price: 0,
-    offerType: "free",
-    coverEmoji: "❓",
-    description:
-      "مجموعه تمرین و نمونه سوال ریاضی عمومی ۱، دسته‌بندی‌شده بر اساس فصل: حد و پیوستگی، مشتق، کاربردهای مشتق و انتگرال.\n\nبرای شب امتحان، اول تمرین‌های بی‌پاسخ را بزنید و بعد پاسخ‌ها را چک کنید.\n\nمنبع: تمرین‌های آزاد درس 18.01 MIT OpenCourseWare.",
-    file: {
-      url: "https://ocw.mit.edu/courses/18-01sc-single-variable-calculus-fall-2010/",
-      label: "تمرین‌های حساب یک‌متغیره — MIT OCW",
-    },
-    daysAgo: 8,
-    views: 63,
-  },
-  {
-    ownerEmail: "mohammadreza.ahmadi@daneshbook.local",
-    title: "جبر خطی — جزوه‌ی کامل گیلبرت استرنگ",
+    ownerEmail: "zahra.mousavi@daneshbook.local",
+    title: "تبدیل و پاک‌سازی داده با dplyr — خلاصه‌ی کاربردی",
     kind: "note",
     category: "basic",
-    course: "جبر خطی",
-    author: "Gilbert Strang",
-    university: "دانشگاه فردوسی مشهد",
+    course: "آمار کاربردی",
+    author: "Posit / RStudio",
+    university: "دانشگاه الزهرا",
     price: 0,
     offerType: "free",
-    coverEmoji: "🔢",
+    coverEmoji: "🧮",
     description:
-      "جزوه و ویدیوهای درس جبر خطی پروفسور گیلبرت استرنگ: بردارها، فضای برداری، دستگاه معادلات، دترمینان، مقدار و بردار ویژه.\n\nاگر جبر خطی برایتان مبهم است، این دوره بهترین شروع رایگان است؛ ترتیب مطالعه پیشنهادی: جلسه ۱ تا ۱۰ و بعد فصل مقدار ویژه.\n\nمنبع: MIT OpenCourseWare 18.06 (آزاد).",
+      "فیلتر، مرتب‌سازی، گروه‌بندی، خلاصه‌سازی و اتصال جدول‌ها با بسته‌ی dplyr — همه در یک صفحه‌ی مرجع.\n\nبرای درس آمار و هر پروژه‌ای که باید داده‌ی خام را آماده کند، بهترین مرجع سریع است.\n\n" +
+      R_CREDIT,
     file: {
-      url: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/",
-      label: "Linear Algebra 18.06 — MIT OCW",
+      path: "/samples/data-transformation.pdf",
+      name: "Data-Transformation-Cheatsheet.pdf",
+      size: 903999,
+      mime: PDF_MIME,
     },
-    daysAgo: 10,
-    views: 78,
+    daysAgo: 3,
+    views: 58,
   },
   {
     ownerEmail: "elham.sadeghi@daneshbook.local",
-    title: "حساب دیفرانسیل و انتگرال — جلد اول (کتاب آزاد)",
+    title: "مصورسازی داده با ggplot2 — راهنمای تصویری نمودارها",
     kind: "note",
-    category: "basic",
-    course: "ریاضی عمومی ۲",
-    author: "OpenStax",
+    category: "management",
+    course: "مصورسازی داده",
+    author: "Posit / RStudio",
     university: "دانشگاه علامه طباطبایی",
-    price: 0,
-    offerType: "free",
-    coverEmoji: "📐",
-    description:
-      "جلد اول حساب دیفرانسیل و انتگرال OpenStax؛ توضیح ساده، شکل‌های زیاد و تمرین‌های فراوان.\n\nبرای دانشجویانی که کتاب فارسی را می‌خوانند و می‌خواهند مسئله‌های بیشتری حل کنند، مکمل خوبی است.\n\nمنبع: OpenStax Calculus Volume 1 (لایسنس CC BY-NC-SA).",
-    file: {
-      url: "https://openstax.org/details/books/calculus-volume-1",
-      label: "Calculus Volume 1 — OpenStax",
-    },
-    daysAgo: 13,
-    views: 34,
-  },
-  {
-    ownerEmail: "negar.rezaei@daneshbook.local",
-    title: "آمار و احتمال — کتاب آزاد مقدماتی + جدول‌های آماری",
-    kind: "note",
-    category: "medicine",
-    course: "آمار زیستی",
-    author: "OpenStax",
-    university: "دانشگاه علوم پزشکی تهران",
     price: 0,
     offerType: "free",
     coverEmoji: "📈",
     description:
-      "کتاب آمار مقدماتی برای رشته‌های علوم پزشکی: توصیف داده، توزیع نرمال، فاصله اطمینان و آزمون فرض.\n\nبخش آزمون فرضش برای درس آمار زیستی و تحلیل مقاله‌های پزشکی واقعاً کاربردی است.\n\nمنبع: OpenStax Introductory Statistics (لایسنس آزاد).",
+      "از نمودار نقطه‌ای و میله‌ای تا هیستوگرام، خطی و نقشه‌ی حرارتی؛ همراه با تنظیم رنگ، محور و برچسب.\n\nبرای تحلیل داده و ارائه‌ی پایان‌ترم، نمودار درست نصف نمره است.\n\n" +
+      R_CREDIT,
     file: {
-      url: "https://openstax.org/details/books/introductory-statistics-2e",
-      label: "Introductory Statistics — OpenStax",
+      path: "/samples/data-visualization.pdf",
+      name: "Data-Visualization-Cheatsheet.pdf",
+      size: 1109698,
+      mime: PDF_MIME,
     },
-    daysAgo: 15,
-    views: 29,
+    daysAgo: 4,
+    views: 63,
   },
   {
+    ownerEmail: "parsa.niknam@daneshbook.local",
+    title: "گیت و گیت‌هاب برای پروژه‌های دانشگاهی",
+    kind: "note",
+    category: "engineering",
+    course: "کارگاه نرم‌افزار",
+    author: "Posit / RStudio",
+    university: "دانشگاه صنعتی امیرکبیر",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "💻",
+    description:
+      "دستورهای ضروری گیت: init، clone، commit، branch، merge، push و pull — با توضیح کارهایی که سر پروژه‌ی گروهی خراب می‌شود.\n\nاگر استاد نمره‌ی پروژه را به مخزن گیت‌هاب می‌دهد، این فایل را از دست نده.\n\n" +
+      R_CREDIT,
+    file: { path: "/samples/git-github.pdf", name: "Git-GitHub-Cheatsheet.pdf", size: 264630, mime: PDF_MIME },
+    daysAgo: 5,
+    views: 71,
+  },
+  {
+    ownerEmail: "niloofar.bagheri@daneshbook.local",
+    title: "یادگیری ماشین با caret — خلاصه‌ی مدل‌سازی و ارزیابی",
+    kind: "note",
+    category: "engineering",
+    course: "یادگیری ماشین",
+    author: "Posit / RStudio",
+    university: "دانشگاه شیراز",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "🧠",
+    description:
+      "آموزش مدل، تنظیم پارامتر، اعتبارسنجی متقابل و سنجش دقت با بسته‌ی caret در یک صفحه.\n\nمناسب کسانی که درس یادگیری ماشین دارند و می‌خواهند کدِ پروژه را از صفر شروع نکنند.\n\n" +
+      R_CREDIT,
+    file: { path: "/samples/ml-with-caret.pdf", name: "ML-with-caret.pdf", size: 74757, mime: PDF_MIME },
+    daysAgo: 6,
+    views: 39,
+  },
+  {
+    ownerEmail: "parsa.niknam@daneshbook.local",
+    title: "یادگیری عمیق با Keras — خلاصه‌ی شبکه‌های عصبی",
+    kind: "note",
+    category: "engineering",
+    course: "یادگیری عمیق",
+    author: "Posit / RStudio",
+    university: "دانشگاه صنعتی امیرکبیر",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "🤖",
+    description:
+      "لایه‌ها، تابع فعال‌سازی، آموزش مدل، تنظیم نرخ یادگیری و جلوگیری از بیش‌برازش با Keras.\n\nبرای پروژه‌ی درس یادگیری عمیق و مسابقه‌های دانشجویی کاربردی است.\n\n" +
+      R_CREDIT,
+    file: {
+      path: "/samples/deep-learning-keras.pdf",
+      name: "Deep-Learning-Keras.pdf",
+      size: 1195101,
+      mime: PDF_MIME,
+    },
+    daysAgo: 7,
+    views: 52,
+  },
+  {
+    ownerEmail: "arman.yazdani@daneshbook.local",
+    title: "پیش‌پردازش داده برای مدل‌های یادگیری ماشین",
+    kind: "note",
+    category: "management",
+    course: "اقتصاد سنجی",
+    author: "Posit / RStudio",
+    university: "دانشگاه تهران",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "⚙️",
+    description:
+      "نرمال‌سازی، رمزگذاری متغیرهای دسته‌ای، مدیریت داده‌ی گم‌شده و متعادل‌سازی کلاس‌ها — مرحله‌ای که بیشترین اثر را روی دقت مدل دارد.\n\nمناسب درس اقتصاد سنجی و هر پروژه‌ی داده‌محور.\n\n" +
+      R_CREDIT,
+    file: { path: "/samples/ml-preprocessing.pdf", name: "ML-Preprocessing.pdf", size: 472174, mime: PDF_MIME },
+    daysAgo: 8,
+    views: 27,
+  },
+  {
+    ownerEmail: "hossein.moradi@daneshbook.local",
+    title: "کار با تاریخ و زمان در R (بسته‌ی lubridate)",
+    kind: "note",
+    category: "engineering",
+    course: "تحلیل داده‌های زمانی",
+    author: "Posit / RStudio",
+    university: "دانشگاه ارومیه",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "⏱️",
+    description:
+      "تبدیل رشته به تاریخ، استخراج سال/ماه/روز، محاسبه‌ی فاصله‌ها و کار با منطقه‌های زمانی.\n\nهر پروژه‌ای که داده‌ی تاریخی دارد (فروش، ترافیک، بیمار) به این فایل نیاز پیدا می‌کند.\n\n" +
+      R_CREDIT,
+    file: { path: "/samples/dates-in-r.pdf", name: "Dates-in-R-Cheatsheet.pdf", size: 495069, mime: PDF_MIME },
+    daysAgo: 9,
+    views: 22,
+  },
+  {
+    ownerEmail: "sina.fathi@daneshbook.local",
+    title: "محاسبات موازی — خلاصه‌ی مفاهیم و کد",
+    kind: "note",
+    category: "engineering",
+    course: "محاسبات عددی پیشرفته",
+    author: "Posit / RStudio",
+    university: "دانشگاه صنعتی خواجه نصیر",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "🔗",
+    description:
+      "تفاوت پردازش سری و موازی، هسته‌ها، بسته‌های parallel و foreach، و اینکه کِی موازی‌سازی واقعاً سرعت می‌دهد.\n\nبرای درس محاسبات عددی و پروژه‌های شبیه‌سازی سنگین.\n\n" +
+      R_CREDIT,
+    file: {
+      path: "/samples/parallel-computing.pdf",
+      name: "Parallel-Computation.pdf",
+      size: 172641,
+      mime: PDF_MIME,
+    },
+    daysAgo: 10,
+    views: 18,
+  },
+
+  /* --------------------- ۵ آگهی پاورپوینت --------------------- */
+  {
+    ownerEmail: "negar.rezaei@daneshbook.local",
+    title: "اسلایدهای آموزشی SQL: JOIN و ادغام جدول‌ها",
+    kind: "slide",
+    category: "engineering",
+    course: "پایگاه داده",
+    author: "ReDI School of Digital Integration",
+    university: "دانشگاه علوم پزشکی تهران",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "📊",
+    description:
+      "یک ارائه‌ی کامل و آماده‌ی کلاس درباره‌ی انواع JOIN (inner، left، right، full) با شکل و مثال جدول‌های واقعی.\n\nبرای ارائه‌ی درس پایگاه داده یا مرور سریع قبل از امتحان مناسب است؛ قابل ویرایش with PowerPoint.\n\nمنبع: اسلایدهای دوره‌ی آزاد Data Analytics مدرسه‌ی ReDI (GitHub).",
+    file: { path: "/samples/sql-joins.pptx", name: "SQL-Joins-Slides.pptx", size: 316574, mime: PPTX_MIME },
+    daysAgo: 2,
+    views: 41,
+  },
+  {
+    ownerEmail: "yasaman.karimi@daneshbook.local",
+    title: "اسلایدهای تفکر تحلیلی و ترسیم نمودار",
+    kind: "slide",
+    category: "art",
+    course: "ارائه و مصورسازی",
+    author: "ReDI School of Digital Integration",
+    university: "دانشگاه گیلان",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "🎨",
+    description:
+      "از سؤال درست تا انتخاب نمودار مناسب: انواع نمودار، خطاهای رایج در ارائه‌ی داده و تمرین‌های کلاسی.\n\nبرای درس ارائه و هر سمیناری که باید داده نشان بدهید.\n\nمنبع: اسلایدهای دوره‌ی آزاد Data Analytics مدرسه‌ی ReDI (GitHub).",
+    file: {
+      path: "/samples/analytical-thinking-plotting.pptx",
+      name: "Analytical-Thinking-and-Plotting.pptx",
+      size: 2137908,
+      mime: PPTX_MIME,
+    },
+    daysAgo: 3,
+    views: 35,
+  },
+  {
+    ownerEmail: "kian.rostami@daneshbook.local",
+    title: "مرور مصورسازی و تحلیل اکتشافی داده (EDA)",
+    kind: "slide",
+    category: "management",
+    course: "تحلیل داده",
+    author: "ReDI School of Digital Integration",
+    university: "دانشگاه علم و صنعت",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "🔍",
+    description:
+      "اسلایدهای مرور: توزیع داده، داده‌ی پرت، همبستگی و اینکه از دل نمودارها چه سؤالی دربیاوریم.\n\nمناسب جلسه‌ی مرور درس تحلیل داده و آماده‌سازی پروژه.\n\nمنبع: اسلایدهای دوره‌ی آزاد Data Analytics مدرسه‌ی ReDI (GitHub).",
+    file: {
+      path: "/samples/plotting-eda-review.pptx",
+      name: "Plotting-and-EDA-Review.pptx",
+      size: 1120579,
+      mime: PPTX_MIME,
+    },
+    daysAgo: 5,
+    views: 24,
+  },
+  {
+    ownerEmail: "elham.sadeghi@daneshbook.local",
+    title: "روایت‌گری با داده — اسلایدهای ارائه‌ی حرفه‌ای",
+    kind: "slide",
+    category: "management",
+    course: "ارائه‌ی کسب‌وکار",
+    author: "ReDI School of Digital Integration",
+    university: "دانشگاه علامه طباطبایی",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "🗣️",
+    description:
+      "چطور داده را به یک داستان قابل‌فهم تبدیل کنیم: ساختار ارائه، انتخاب نمودار، تمرکز روی پیام و اشتباه‌های رایج.\n\nبرای ارائه‌ی پایان‌ترم و دفاع از پروژه واقعاً کمک می‌کند.\n\nمنبع: اسلایدهای دوره‌ی آزاد Data Analytics مدرسه‌ی ReDI (GitHub).",
+    file: {
+      path: "/samples/storytelling-with-data.pptx",
+      name: "Storytelling-with-Data.pptx",
+      size: 494402,
+      mime: PPTX_MIME,
+    },
+    daysAgo: 6,
+    views: 47,
+  },
+  {
+    ownerEmail: "niloofar.bagheri@daneshbook.local",
+    title: "مقدمه‌ی پردازش زبان طبیعی (NLP) — اسلایدهای کلاس",
+    kind: "slide",
+    category: "engineering",
+    course: "پردازش زبان طبیعی",
+    author: "Lighthouse Labs",
+    university: "دانشگاه شیراز",
+    price: 0,
+    offerType: "free",
+    coverEmoji: "💬",
+    description:
+      "اسلایدهای درس NLP: پیش‌پردازش متن، توکن‌سازی، بردارسازی، مدل‌های زبانی و کاربردها — با مثال‌های پایتون.\n\nبرای شروع درس پردازش زبان طبیعی و پروژه‌ی تحلیل متن.\n\nمنبع: اسلایدهای دوره‌ی آزاد Data Science (GitHub).",
+    file: { path: "/samples/nlp-intro.pptx", name: "NLP-Introduction-Slides.pptx", size: 2693076, mime: PPTX_MIME },
+    daysAgo: 8,
+    views: 31,
+  },
+
+  /* --------------------- آگهی‌های کتاب فیزیکی --------------------- */
+  {
     ownerEmail: "amirhossein.karimi@daneshbook.local",
-    title: "مدارهای الکتریکی — کتاب دست دوم، سالم",
+    title: "مدارهای الکتریکی نلسون — دست دوم سالم",
     kind: "book",
     category: "engineering",
     course: "مدارهای الکتریکی ۱",
@@ -268,16 +577,15 @@ const DEMO_LISTINGS: DemoListing[] = [
     price: 420_000,
     offerType: "sell",
     isExchangeable: true,
-    condition: "good",
     coverEmoji: "📘",
     description:
-      "کتاب مدارهای الکتریکی نلسون، چاپ داخل، بدون خط‌خوردگی و بدون پارگی.\n\nجلد کمی اثر میز دارد ولی داخل کاملاً تمیز است. تحویل حضوری در دانشگاه شریف یا ارسال با پست.",
+      "کتاب مدارهای الکتریکی نلسون، چاپ داخل، بدون خط‌خوردگی و بدون پارگی.\n\nجلد کمی اثر میز دارد ولی داخل کاملاً تمیز است. تحویل حضوری در شریف یا ارسال با پست.",
     daysAgo: 3,
     views: 44,
   },
   {
     ownerEmail: "sara.mohammadi@daneshbook.local",
-    title: "مبانی برنامه‌نویسی C — قابل تبادل با کتاب پایتون",
+    title: "مبانی برنامه‌نویسی C — تبادل با کتاب پایتون",
     kind: "book",
     category: "engineering",
     course: "مبانی کامپیوتر",
@@ -286,62 +594,113 @@ const DEMO_LISTINGS: DemoListing[] = [
     price: 0,
     offerType: "exchange",
     isExchangeable: true,
-    condition: "good",
     coverEmoji: "📗",
     description:
       "کتاب مبانی برنامه‌نویسی C (دیتل) — ترم اول خریدم و دیگر لازمش ندارم.\n\nدوست دارم با یک کتاب آموزش پایتون یا ساختمان داده تبادل کنم. حضوری در دانشگاه تهران.",
-    daysAgo: 5,
+    daysAgo: 4,
     views: 31,
   },
   {
-    ownerEmail: "elham.sadeghi@daneshbook.local",
-    title: "اصول مدیریت و حسابداری — دو جلد",
+    ownerEmail: "ali.salehi@daneshbook.local",
+    title: "مقاومت مصالح — جلد اول و دوم",
     kind: "book",
-    category: "management",
-    course: "اصول حسابداری ۱",
-    university: "دانشگاه علامه طباطبایی",
-    price: 260_000,
-    offerType: "sell",
-    condition: "new",
-    coverEmoji: "📙",
-    description:
-      "دو جلد اصول حسابداری، تقریباً نو (فقط فصل‌های اول خوانده شده).\n\nهمراهش جزوه‌ی دست‌نویس خودم از کلاس را هم می‌دهم. تحویل در تهران.",
-    daysAgo: 7,
-    views: 18,
-  },
-  {
-    ownerEmail: "amirhossein.karimi@daneshbook.local",
-    title: "فیزیک هالیدی جلد ۱ — دست دوم",
-    kind: "book",
-    category: "basic",
-    course: "فیزیک ۱",
-    author: "هالیدی، رزنیک، واکر",
-    university: "دانشگاه صنعتی شریف",
-    price: 380_000,
+    category: "engineering",
+    course: "مقاومت مصالح ۱",
+    author: "بیرجانسون",
+    university: "دانشگاه تبریز",
+    price: 350_000,
     offerType: "sell",
     isExchangeable: true,
     condition: "good",
     coverEmoji: "📕",
     description:
-      "فیزیک هالیدی جلد اول، ترجمه‌ی فارسی، چاپ خوب.\n\nچند صفحه اول با مداد زیر خط دارد که با پاک‌کن تمیز می‌شود. بقیه سالم است.",
-    daysAgo: 9,
-    views: 26,
+      "دو جلد مقاومت مصالح، ترجمه‌ی فارسی، سالم و بدون پارگی.\n\nچند صفحه با مداد زیر خط دارد که پاک می‌شود. تحویل در تبریز.",
+    daysAgo: 6,
+    views: 19,
   },
   {
-    ownerEmail: "negar.rezaei@daneshbook.local",
-    title: "آناتومی — درخواست کتاب دست دوم",
+    ownerEmail: "fatemeh.hosseini@daneshbook.local",
+    title: "شیمی آلی — کتاب مرجع + جزوه‌ی دست‌نویس",
     kind: "book",
-    category: "medicine",
-    course: "آناتومی",
-    university: "دانشگاه علوم پزشکی تهران",
+    category: "basic",
+    course: "شیمی آلی ۱",
+    author: "واد",
+    university: "دانشگاه اصفهان",
+    price: 300_000,
+    offerType: "sell",
+    condition: "good",
+    coverEmoji: "🧪",
+    description:
+      "کتاب شیمی آلی واد، همراه با جزوه‌ی دست‌نویس خودم از کلاس (تمیز و خوانا).\n\nبرای کسی که ترم بعد شیمی آلی دارد، مجموعه‌ی کاملی است.",
+    daysAgo: 7,
+    views: 23,
+  },
+  {
+    ownerEmail: "mahsa.sharifi@daneshbook.local",
+    title: "حقوق مدنی — جلد ۱ تا ۴ (کاتوزیان)",
+    kind: "book",
+    category: "humanities",
+    course: "حقوق مدنی",
+    author: "ناصر کاتوزیان",
+    university: "دانشگاه شهید بهشتی",
+    price: 600_000,
+    offerType: "sell",
+    condition: "good",
+    coverEmoji: "📚",
+    description:
+      "چهار جلد حقوق مدنی کاتوزیان، چاپ‌های مختلف ولی همه سالم و بدون خط‌خوردگی.\n\nفروش به‌صورت مجموعه یا جداگانه. تحویل در تهران.",
+    daysAgo: 9,
+    views: 37,
+  },
+  {
+    ownerEmail: "rana.taghavi@daneshbook.local",
+    title: "دستور زبان انگلیسی (Advanced Grammar) — دست دوم",
+    kind: "book",
+    category: "language",
+    course: "زبان تخصصی",
+    author: "Martin Hewings",
+    university: "دانشگاه فردوسی مشهد",
+    price: 180_000,
+    offerType: "sell",
+    isExchangeable: true,
+    coverEmoji: "🗣️",
+    description:
+      "Advanced Grammar in Use، چاپ اصلی، داخل تمیز. چند تمرین با مداد حل شده که با پاک‌کن تمیز می‌شود.\n\nمناسب آمادگی آزمون‌های زبان و درس زبان تخصصی.",
+    daysAgo: 11,
+    views: 15,
+  },
+  {
+    ownerEmail: "behnam.akbari@daneshbook.local",
+    title: "متالورژی فیزیکی — درخواست کتاب دست دوم",
+    kind: "book",
+    category: "engineering",
+    course: "متالورژی فیزیکی",
+    university: "دانشگاه صنعتی اصفهان",
     price: 0,
     offerType: "free",
+    coverEmoji: "⚙️",
+    description:
+      "دنبال یک نسخه‌ی دست دوم و سالم از کتاب متالورژی فیزیکی هستم (ترجیحاً چاپ دانشگاهی).\n\nاگر کتاب را نمی‌خواهید، پیام بدهید؛ حضوری در اصفهان.",
+    daysAgo: 12,
+    views: 8,
+  },
+  {
+    ownerEmail: "sheida.nouri@daneshbook.local",
+    title: "فیزیولوژی گایتون — دست دوم",
+    kind: "book",
+    category: "medicine",
+    course: "فیزیولوژی",
+    author: "گایتون",
+    university: "دانشگاه علوم پزشکی ایران",
+    price: 550_000,
+    offerType: "sell",
+    isExchangeable: true,
     condition: "good",
     coverEmoji: "🩺",
     description:
-      "دنبال یک نسخه‌ی دست دوم آناتومی (مثلاً گری یا اسنل) هستم، ترجیحاً تهران.\n\nاگر کسی در ترم آخر کتابش را نمی‌خواهد، پیام بدهد.",
-    daysAgo: 11,
-    views: 9,
+      "فیزیولوژی گایتون، ترجمه‌ی فارسی، جلد سالم و صفحات بدون خط‌خوردگی.\n\nچند فصل اول با ماژیک فسفری علامت‌گذاری شده که برای مرور بعدی هم مفید است.",
+    daysAgo: 13,
+    views: 29,
   },
 ];
 
@@ -437,8 +796,10 @@ export async function seedDemoContent(): Promise<SeedResult> {
     if (listing.file) {
       const file = await saveExternalLink({
         ownerId,
-        fileName: listing.file.label,
-        externalUrl: listing.file.url,
+        fileName: listing.file.name,
+        externalUrl: listing.file.path,
+        mimeType: listing.file.mime,
+        sizeBytes: listing.file.size,
       });
       if (await attachFileToBook(file.id, created.id, ownerId)) filesAttached += 1;
     }

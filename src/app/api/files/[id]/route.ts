@@ -1,4 +1,5 @@
 import { countDownload, readFileForDownload, safeFileName } from "@/lib/files";
+import { SITE } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,11 @@ export async function GET(_request: Request, ctx: { params: Promise<{ id: string
   if (!file.base64) {
     if (file.externalUrl) {
       await countDownload(id);
-      return Response.redirect(file.externalUrl, 302);
+      // مسیر نسبی (فایل‌های نمونه‌ی خود سایت) با دامنه‌ی همین سایت کامل می‌شود.
+      const target = file.externalUrl.startsWith("/")
+        ? `${SITE.url}${file.externalUrl}`
+        : file.externalUrl;
+      return Response.redirect(target, 302);
     }
     return new Response("فایلی برای این آگهی ثبت نشده است.", { status: 404 });
   }
