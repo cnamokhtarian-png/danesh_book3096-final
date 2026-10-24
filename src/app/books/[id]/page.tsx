@@ -6,6 +6,7 @@ import FileCard from "@/components/FileCard";
 import { Icon } from "@/components/Icon";
 import JsonLd from "@/components/JsonLd";
 import RequestForm from "@/components/RequestForm";
+import { ChatLauncher } from "@/components/Chat";
 import ShareButton from "@/components/ShareButton";
 import { Badge } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -289,6 +290,16 @@ export default async function BookDetailPage({ params }: PageProps) {
                 </p>
               </div>
             </div>
+            {!isOwner && book.status === "available" && (
+              <div className="mt-4">
+                <ChatLauncher
+                  bookId={book.id}
+                  bookTitle={book.title}
+                  isLoggedIn={Boolean(user)}
+                  currentUserId={user?.id}
+                />
+              </div>
+            )}
             <p className="mt-4 rounded-2xl bg-ink-50 px-3.5 py-3 text-[12px] leading-6 text-ink-600">
               هر تبادل موفق ۵ امتیاز کارما برای دو طرف دارد؛ امتیاز نشان‌دهنده اعتبار و
               سابقه دانشجو در دانش‌بوک است.

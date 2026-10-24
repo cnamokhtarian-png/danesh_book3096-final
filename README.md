@@ -8,7 +8,7 @@
 cp .env.example .env      # سپس DATABASE_URL را پر کنید
 npm install
 
-npm run db:push           # ساخت جداول از روی src/db/schema.ts
+npm run db:push           # ساخت/به‌روزرسانی جداول از روی src/db/schema.ts (از جمله گفتگوها)
 npm run db:set-admin      # ساخت حساب مدیر (ADMIN_USERNAME / ADMIN_PASSWORD)
 npm run dev
 ```
@@ -38,6 +38,10 @@ npm run dev
 | `npm run db:set-admin` | ساخت/ارتقای حساب مدیر — فقط یک ردیف را upsert می‌کند |
 | `npm run db:seed` | داده نمونه برای توسعه (`ALLOW_SEED=1` برای محیط تولید) |
 | `npm run reset-link -- <email>` | ساخت دستی لینک بازیابی رمز (وقتی سرویس ایمیل ندارید) |
+
+### راه‌اندازی گفتگوها روی دیتابیس موجود
+
+برای ایجاد دو جدول گفتگو، در محیط توسعه/راه‌اندازی `DATABASE_URL='postgresql://…' npm run db:push` را اجرا کنید. در محیط تولید می‌توانید محتوای [`scripts/sql/002-chats.sql`](./scripts/sql/002-chats.sql) را در SQL Editor دیتابیس اجرا کنید؛ اسکریپت افزایشی است و داده‌های قبلی را تغییر نمی‌دهد.
 
 ## ساخت حساب مدیر
 
