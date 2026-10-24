@@ -1,0 +1,7 @@
+{
+  "dialect": "postgresql",
+  "schema": "./src/db/schema.ts",
+  "dbCredentials": {
+    "url": "postgresql://postgres.offfncdvbsfyttmpytnv:sdfasdgasgdfvdfv@aws-0-eu-west-1.pooler.supabase.com:6543/postgres"
+  }
+}
