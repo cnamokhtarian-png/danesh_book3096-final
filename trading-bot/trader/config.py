@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
+from .economics import round_trip_fee_pct
+
 LIVE_CONFIRM_PHRASE = "I-UNDERSTAND-THE-RISK"
 SUPPORTED_EXCHANGES = ("nobitex", "wallex")
 SUPPORTED_MODES = ("paper", "live")
@@ -236,6 +238,12 @@ class Settings:
             errors.append("STOP_LOSS_PCT باید بین ۰ و ۱۰۰ باشد.")
         if not 0 < self.take_profit_pct < 1000:
             errors.append("TAKE_PROFIT_PCT باید بزرگ‌تر از صفر باشد.")
+        elif self.take_profit_pct <= round_trip_fee_pct(self.fee_pct):
+            errors.append(
+                "TAKE_PROFIT_PCT باید از کارمزد رفت‌وبرگشت "
+                f"({round_trip_fee_pct(self.fee_pct):.2f}%) بیشتر باشد؛ در غیر این صورت "
+                "حتی معامله‌ی برنده هم ضرر می‌دهد."
+            )
         if not 0 <= self.max_spread_pct < 100:
             errors.append("MAX_SPREAD_PCT باید بین ۰ و ۱۰۰ باشد.")
         if not 0 <= self.fee_pct < 10:

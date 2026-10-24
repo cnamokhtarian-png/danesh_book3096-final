@@ -171,10 +171,12 @@ DATABASE_URL='postgresql://…' SITE_URL='https://your-domain.com' npm run reset
 
 ```bash
 cd trading-bot
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env          # کلیدها فقط اینجا
+python setup_wizard.py         # دستیار فارسی: چند سؤال، بدون نیاز به دانش API
+# یا یک‌کلیکی: start.bat (ویندوز) / bash start.sh (مک و لینوکس)
+
 python scripts/demo_offline.py # دموی بدون اینترنت
-python -m trader check
+python -m trader check         # بررسی نهایی، بدون ثبت سفارش
 python -m trader once
 ```
+
+راهنمای گام‌به‌گام برای تازه‌کارها: [`trading-bot/docs/QUICKSTART-FA.md`](./trading-bot/docs/QUICKSTART-FA.md).

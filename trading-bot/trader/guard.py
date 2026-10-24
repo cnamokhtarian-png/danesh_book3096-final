@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from .broker import AuthError, ExchangeError, build_live_client
 from .config import Settings
+from .economics import analyze
 from .notify.telegram import TelegramNotifier
 
 
@@ -152,6 +153,24 @@ def preflight(settings: Settings) -> list[Check]:
                 level="info" if settings.llm_available else "error",
             )
         )
+
+    economics = analyze(
+        settings.take_profit_pct,
+        settings.stop_loss_pct,
+        settings.fee_pct,
+        settings.max_trades_per_day,
+    )
+    positive_edge = settings.take_profit_pct > economics.round_trip_fee_pct
+    checks.append(
+        Check(
+            "اقتصاد معامله",
+            positive_edge,
+            f"کارمزد رفت‌وبرگشت {economics.round_trip_fee_pct:.2f}% | حد سود خالص "
+            f"{economics.net_take_profit_pct:.2f}% | حداقل نرخ برد لازم "
+            f"{economics.breakeven_win_rate * 100:.0f}%",
+            level="info" if positive_edge else "error",
+        )
+    )
 
     if settings.kill_switch_path.exists():
         checks.append(

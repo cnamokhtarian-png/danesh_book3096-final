@@ -6,8 +6,10 @@ import argparse
 import sys
 from pathlib import Path
 
+from .broker import ExchangeError
 from .config import ConfigError, Settings
 from .db import Store
+from .economics import analyze, explain
 from .engine import Engine
 from .guard import has_blocking_errors, preflight
 from .util import FileLock, fmt_number, fmt_pct, setup_logging
@@ -34,6 +36,20 @@ def cmd_check(args: argparse.Namespace) -> int:
         if check.level == "warn" and check.ok:
             prefix = "⚠️"
         print(f"{prefix} {check.name}: {check.detail}")
+
+    economics = analyze(
+        settings.take_profit_pct,
+        settings.stop_loss_pct,
+        settings.fee_pct,
+        settings.max_trades_per_day,
+    )
+    print("\nاقتصاد معامله (بدون پیش‌بینی سود؛ فقط ریاضی کارمزد):")
+    for line in explain(economics):
+        print(f"  • {line}")
+    print(
+        f"  • اگر سقف {settings.max_trades_per_day} معامله در روز پر شود، در بدترین حالت "
+        f"حدود {economics.daily_fee_drag_pct:.1f}% از سرمایه صرف کارمزد می‌شود."
+    )
 
     summary = settings.describe()
     print("\nخلاصه‌ی تنظیمات:")
@@ -217,6 +233,16 @@ def main(argv: list[str] | None = None) -> int:
     except ConfigError as exc:
         print(f"❌ {exc}", file=sys.stderr)
         return 2
+    except ExchangeError as exc:
+        print(
+            "❌ ارتباط با صرافی برقرار نشد.\n"
+            f"   جزئیات: {exc}\n"
+            "   • اینترنت/VPN را بررسی کنید\n"
+            "   • اگر صرافی در دسترس نیست، بعداً دوباره امتحان کنید\n"
+            "   • هیچ سفارشی ثبت نشد و پول شما دست‌نخورده است",
+            file=sys.stderr,
+        )
+        return 3
     except KeyboardInterrupt:
         print("\n⏹ متوقف شد.")
         return 130
