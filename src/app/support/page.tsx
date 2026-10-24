@@ -48,29 +48,39 @@ export default async function SupportPage() {
             >
               {MANAGEMENT_EMAIL}
             </a>
-            <p className="mt-3 text-[11.5px] leading-6 text-ink-400">
-              همه پیشنهادات ارسالی در جدول <span dir="ltr" className="font-bold">suggestions</span>{" "}
-              ذخیره و توسط مدیر سایت پیگیری می‌شود.
-            </p>
           </div>
 
-          <div className="card-surface space-y-3 p-5">
-            <h2 className="flex items-center gap-2 text-sm font-extrabold text-ink-900">
-              <Icon name="inbox" className="size-4.5 text-brand-600" />
-              زمان پاسخ‌گویی
+          {/* هشدار معامله — جایگزین کارت «زمان پاسخ‌گویی» */}
+          <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-5">
+            <h2 className="flex items-center gap-2 text-sm font-extrabold text-amber-900">
+              <span className="grid size-7 place-items-center rounded-xl bg-amber-100 text-amber-700">
+                <Icon name="alert" className="size-4" />
+              </span>
+              قبل از معامله حواستان باشد
             </h2>
-            <ul className="space-y-2 text-[12.5px] leading-7 text-ink-600">
+
+            <p className="mt-3 rounded-2xl bg-white/70 px-3.5 py-3 text-[12.5px] leading-7 font-bold text-amber-900">
+              هیچ مبلغی را بدون دیدن کالا، توافق روشن و رسیدِ واریز پرداخت نکنید؛ هر پرداختی باید
+              حساب و کتاب داشته باشد.
+            </p>
+
+            <ul className="mt-3 space-y-2 text-[12px] leading-6 text-amber-900/90">
               {[
-                "ثبت پیام: آنی و بدون نیاز به حساب کاربری",
-                "بررسی اولیه: حداکثر ۴۸ ساعت کاری",
-                "پاسخ نهایی: از طریق ایمیل یا شماره تماس شما",
+                "کتاب یا جزوه را پیش از پرداخت، حضوری یا با تماس تصویری ببینید.",
+                "قیمت، وضعیت کالا و نحوه تحویل را قبل از واریز مشخص کنید.",
+                "فقط به حساب به نام همان فروشنده واریز کنید؛ رسید را نگه دارید.",
+                "در صورت تردید، معامله را انجام ندهید و موضوع را به پشتیبانی گزارش کنید.",
               ].map((item) => (
                 <li key={item} className="flex items-start gap-2">
-                  <Icon name="check" className="mt-1 size-4 shrink-0 text-emerald-500" />
+                  <Icon name="check" className="mt-1 size-3.5 shrink-0 text-amber-600" />
                   {item}
                 </li>
               ))}
             </ul>
+
+            <p className="mt-3 border-t border-amber-200/80 pt-3 text-[11px] leading-6 text-amber-800/80">
+              دانش‌بوک واسطهٔ پرداخت نیست و مسئولیت بررسی صحت معامله با خود کاربران است.
+            </p>
           </div>
 
           <div className="rounded-[1.5rem] border border-dashed border-brand-200 bg-brand-50/50 p-5">
