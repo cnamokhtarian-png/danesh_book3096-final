@@ -110,6 +110,7 @@ export const NAV_GROUPS: { title: string; icon: string; items: NavLink[] }[] = [
     icon: "user",
     items: [
       { href: "/dashboard", label: "داشبورد من", icon: "dashboard", authOnly: true },
+      { href: "/messages", label: "گفتگوها", icon: "message", authOnly: true },
       { href: "/dashboard/new", label: "ثبت آگهی جدید", icon: "plus" },
       { href: "/profile", label: "پروفایل", icon: "user", authOnly: true },
       { href: "/support", label: "پیشنهادات و پشتیبانی", icon: "headset" },

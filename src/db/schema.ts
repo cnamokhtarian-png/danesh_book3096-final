@@ -94,6 +94,36 @@ export const books = pgTable(
   ],
 );
 
+/** گفتگوهای خصوصی میان خریدار/علاقه‌مند و صاحب آگهی. */
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: serial("id").primaryKey(),
+    bookId: integer("bookId").notNull().references(() => books.id, { onDelete: "cascade" }),
+    buyerId: integer("buyerId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    ownerId: integer("ownerId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("conversations_book_buyer_unique").on(table.bookId, table.buyerId),
+    index("conversations_buyerId_idx").on(table.buyerId),
+    index("conversations_ownerId_idx").on(table.ownerId),
+  ],
+);
+
+export const chatMessages = pgTable(
+  "chatMessages",
+  {
+    id: serial("id").primaryKey(),
+    conversationId: integer("conversationId").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+    senderId: integer("senderId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    body: varchar("body", { length: 1000 }).notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("chatMessages_conversation_created_idx").on(table.conversationId, table.createdAt)],
+);
+
 /** درخواست تبادل / خرید / امانت‌گیری */
 export const requests = pgTable(
   "requests",
