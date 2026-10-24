@@ -6,7 +6,7 @@ import { Icon } from "@/components/Icon";
 import { Badge, EmptyState, StatTile } from "@/components/ui";
 import { getCurrentUser, isAdminUser } from "@/lib/auth";
 import { faNumber, formatDate, MANAGEMENT_EMAIL } from "@/lib/constants";
-import { demoContentStatus } from "@/lib/demo-content";
+import { demoContentStatus, seedDemoContent } from "@/lib/demo-content";
 import { getStats, listSuggestions, listUsersForAdmin } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +31,18 @@ export default async function AdminPage() {
         />
       </div>
     );
+  }
+
+  // اگر سایت هنوز محتوای نمونه ندارد، همان لحظه‌ی باز کردن پنل مدیریت ساخته
+  // می‌شود تا مدیر مجبور نباشد کاری دستی انجام دهد. idempotent است، پس اگر
+  // محتوا وجود داشته باشد هیچ اتفاقی نمی‌افتد.
+  const before = await demoContentStatus();
+  if (before.users === 0) {
+    try {
+      await seedDemoContent();
+    } catch (error) {
+      console.error("[daneshbook:seed] auto-seed failed:", (error as Error).message);
+    }
   }
 
   const [stats, suggestions, users, demo] = await Promise.all([
