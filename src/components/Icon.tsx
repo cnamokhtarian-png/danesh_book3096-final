@@ -19,6 +19,7 @@ export type IconName =
   | "grad"
   | "eye"
   | "eyeOff"
+  | "chevron"
   | "flame"
   | "check"
   | "x"
@@ -132,6 +133,7 @@ const ICONS: Record<IconName, React.ReactNode> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  chevron: <path d="m6 9 6 6 6-6" />,
   eyeOff: (
     <>
       <path d="M10.6 6.1A7.9 7.9 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.4 3.3" />
