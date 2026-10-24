@@ -17,7 +17,7 @@
  */
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
 import { promisify } from "node:util";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, like } from "drizzle-orm";
 import { db } from "@/db";
 import { books, users } from "@/db/schema";
 import { attachFileToBook, ensureFileSchema, saveExternalLink } from "@/lib/files";
@@ -703,6 +703,23 @@ const DEMO_LISTINGS: DemoListing[] = [
     views: 29,
   },
 ];
+
+/** وضعیت فعلی محتوای نمونه (برای نمایش هشدار در پنل مدیریت). */
+export async function demoContentStatus(): Promise<{ users: number; books: number }> {
+  try {
+    const [userRow] = await db
+      .select({ value: count() })
+      .from(users)
+      .where(like(users.email, "%@daneshbook.local"));
+    const [bookRow] = await db
+      .select({ value: count() })
+      .from(books)
+      .where(like(books.description, "%چیت‌شیت%"));
+    return { users: Number(userRow?.value ?? 0), books: Number(bookRow?.value ?? 0) };
+  } catch {
+    return { users: 0, books: 0 };
+  }
+}
 
 export type SeedResult = {
   usersCreated: number;

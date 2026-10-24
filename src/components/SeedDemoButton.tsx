@@ -18,20 +18,28 @@ type SeedResult = {
  *
  * اجرای دوباره بی‌خطر است (idempotent) و نتیجه‌ی هر بار را نشان می‌دهد.
  */
-export default function SeedDemoButton() {
+export default function SeedDemoButton({ demoUsers = 0 }: { demoUsers?: number }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<SeedResult | null>(null);
   const [error, setError] = useState("");
 
   return (
-    <div className="card-surface p-5">
+    <div
+      className={`card-surface p-5 ${demoUsers === 0 ? "border-2 border-amber-300 bg-amber-50/40" : ""}`}
+    >
       <h3 className="flex items-center gap-2 text-sm font-extrabold text-ink-900">
         <span className="grid size-8 place-items-center rounded-xl bg-brand-50 text-brand-600">
           <Icon name="sparkles" className="size-4" />
         </span>
         محتوای نمونه
       </h3>
+      {demoUsers === 0 && (
+        <p className="mt-2 rounded-2xl bg-amber-100 px-3.5 py-2.5 text-[12px] font-bold leading-6 text-amber-800">
+          سایت هنوز محتوای نمونه ندارد؛ با یک کلیک ۲۰ کاربر و ۲۳ آگهی (با فایل واقعی)
+          ساخته می‌شود.
+        </p>
+      )}
       <p className="mt-2 text-[12.5px] leading-7 text-ink-500">
         چند دانشجوی نمونه و چند آگهی واقعیِ فایل (با لینک به منابع آزاد و رایگان مثل
         MIT OpenCourseWare و OpenStax) می‌سازد تا بازار در روزهای اول خالی به‌نظر

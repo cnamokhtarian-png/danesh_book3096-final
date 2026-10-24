@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { Badge, EmptyState, StatTile } from "@/components/ui";
 import { getCurrentUser, isAdminUser } from "@/lib/auth";
 import { faNumber, formatDate, MANAGEMENT_EMAIL } from "@/lib/constants";
+import { demoContentStatus } from "@/lib/demo-content";
 import { getStats, listSuggestions, listUsersForAdmin } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -32,10 +33,11 @@ export default async function AdminPage() {
     );
   }
 
-  const [stats, suggestions, users] = await Promise.all([
+  const [stats, suggestions, users, demo] = await Promise.all([
     getStats(),
     listSuggestions(),
     listUsersForAdmin(),
+    demoContentStatus(),
   ]);
 
   return (
@@ -93,7 +95,7 @@ export default async function AdminPage() {
         />
       </section>
 
-      <SeedDemoButton />
+      <SeedDemoButton demoUsers={demo.users} />
 
       <SuggestionManager items={suggestions} />
 
