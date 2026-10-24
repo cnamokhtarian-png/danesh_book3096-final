@@ -1,9 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { apiFetch } from "@/lib/api-client";
+
+/*
+ * پنجرهٔ شناور گفتگو در `document.body` رندر می‌شود (portal).
+ *
+ * پیش‌تر این پنجره با `position: fixed` داخل کارت صفحهٔ آگهی رندر می‌شد؛ اما
+ * `card-surface` از `backdrop-filter` استفاده می‌کند و طبق CSS چنین عنصری برای
+ * نوادگان fixed «containing block» می‌سازد. نتیجه این بود که مختصات پنجره
+ * نسبت به کارت محاسبه می‌شد، ارتفاع ۶۰۰px از پایین کارت به سمت بالا می‌رفت و
+ * هدر (همراه دکمهٔ بستن) بیرون از viewport و دیده‌نشدنی می‌ماند.
+ *
+ * با portal، پنجره همیشه نسبت به viewport و خارج از هر والدِ دارای
+ * transform/filter/overflow قرار می‌گیرد و اندازه‌اش با dvh محدود می‌شود.
+ */
 
 export type ChatMessage = {
   id: number;
@@ -12,6 +26,9 @@ export type ChatMessage = {
   body: string;
   createdAt: string | Date;
 };
+
+/** اشتراک خالی برای useSyncExternalStore — فقط برای تشخیص محیط کلاینت. */
+const noopSubscribe = () => () => {};
 
 type ChatData = {
   conversation: { id: number; bookId: number; bookTitle: string; partnerName: string; partnerEmoji: string };
@@ -105,8 +122,21 @@ export function ChatWindow({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState("");
+  // در سرور false و بعد از hydrate شدن true می‌شود؛ بدون setState در effect.
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const titleId = useId();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // بستن با کلید Escape — مستقل از منطق ارسال پیام.
+  useEffect(() => {
+    if (embedded) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [embedded, onClose]);
 
   const refresh = useCallback(async () => {
     if (!conversationId) return;
@@ -145,31 +175,35 @@ export function ChatWindow({
     inputRef.current?.focus();
   }
 
-  return (
+  const panel = (
     <section
       role="dialog"
-      aria-label={`گفتگو درباره ${title}`}
-      className={embedded ? "relative flex h-full w-full flex-col overflow-hidden rounded-[1.6rem] border border-ink-100 bg-white shadow-sm" : "fixed inset-x-3 bottom-3 z-[70] flex h-[min(600px,calc(100dvh-24px))] flex-col overflow-hidden rounded-[1.6rem] border border-ink-100 bg-white shadow-[0_24px_80px_rgba(25,23,64,.25)] sm:inset-x-auto sm:bottom-5 sm:left-5 sm:w-[390px]"}
+      aria-labelledby={titleId}
+      className={
+        embedded
+          ? "relative flex h-full w-full flex-col overflow-hidden rounded-[1.6rem] border border-ink-100 bg-white shadow-sm"
+          : "fixed bottom-[calc(env(safe-area-inset-bottom,0px)_+_4.5rem)] left-2 right-2 z-[70] flex h-[calc(100dvh_-_5rem_-_env(safe-area-inset-bottom,0px))] flex-col overflow-hidden rounded-[1.5rem] border border-ink-100 bg-white shadow-[0_24px_80px_rgba(25,23,64,.25)] md:bottom-6 md:left-6 md:right-auto md:h-[min(620px,calc(100dvh_-_3rem))] md:w-[400px]"
+      }
       dir="rtl"
     >
-      <header className="flex items-center gap-3 bg-gradient-to-l from-brand-700 to-brand-500 px-4 py-3.5 text-white">
+      <header className="flex shrink-0 items-center gap-3 bg-gradient-to-l from-brand-700 to-brand-500 px-4 py-3.5 text-white">
         <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/15 text-xl">
           {chat?.conversation.partnerEmoji ?? "💬"}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-extrabold">{chat?.conversation.partnerName ?? "گفتگو با آگهی‌دهنده"}</p>
+          <p id={titleId} className="truncate text-sm font-extrabold">{chat?.conversation.partnerName ?? "گفتگو با آگهی‌دهنده"}</p>
           <p className="mt-0.5 truncate text-[11px] text-white/75">{chat?.conversation.bookTitle ?? title}</p>
         </div>
-        <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-xl text-white/80 transition hover:bg-white/15 hover:text-white" aria-label="بستن گفتگو">
+        <button type="button" onClick={onClose} className="grid size-9 shrink-0 place-items-center rounded-xl text-white/80 transition hover:bg-white/15 hover:text-white" aria-label="بستن گفتگو">
           <Icon name="x" className="size-4.5" />
         </button>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col bg-[#f7f8fc]">
-        <div className="border-b border-ink-100 bg-white px-4 py-2 text-center text-[10.5px] text-ink-400">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f7f8fc]">
+        <div className="shrink-0 border-b border-ink-100 bg-white px-4 py-2 text-center text-[10.5px] text-ink-400">
           گفتگو درباره آگهی «{chat?.conversation.bookTitle ?? title}»
         </div>
-        <div className="no-scrollbar flex-1 space-y-3 overflow-y-auto px-3.5 py-4">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3.5 py-4">
           {loading && !conversationId && (
             <div className="m-auto rounded-2xl bg-white px-4 py-3 text-center text-xs text-ink-400 shadow-sm">در حال آماده‌سازی گفتگوی امن…</div>
           )}
@@ -202,8 +236,8 @@ export function ChatWindow({
           })}
           <div ref={bottomRef} />
         </div>
-        {sendError && <p className="px-4 pb-1 text-[10.5px] text-rose-600">{sendError}</p>}
-        <form onSubmit={send} className="border-t border-ink-100 bg-white p-3">
+        {sendError && <p className="shrink-0 px-4 pb-1 text-[10.5px] text-rose-600">{sendError}</p>}
+        <form onSubmit={send} className="shrink-0 border-t border-ink-100 bg-white p-3">
           <div className="flex items-end gap-2 rounded-2xl border border-ink-100 bg-ink-50/70 p-1.5 focus-within:border-brand-300 focus-within:bg-white">
             <textarea
               ref={inputRef}
@@ -215,7 +249,7 @@ export function ChatWindow({
               rows={1}
               maxLength={1000}
               placeholder="پیامتان را بنویسید…"
-              className="max-h-24 min-h-10 flex-1 resize-y bg-transparent px-2 py-2 text-[12.5px] leading-5 text-ink-900 outline-none placeholder:text-ink-400"
+              className="max-h-24 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-[12.5px] leading-5 text-ink-900 outline-none placeholder:text-ink-400"
               aria-label="متن پیام"
             />
             <button type="submit" disabled={!text.trim() || busy || !conversationId} className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-600 text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40" aria-label="ارسال پیام">
@@ -229,6 +263,10 @@ export function ChatWindow({
       </div>
     </section>
   );
+
+  if (embedded) return panel;
+  // تا قبل از hydrate شدن، پنجره‌ای وجود ندارد؛ متن سرور بدون تغییر می‌ماند.
+  return mounted ? createPortal(panel, document.body) : null;
 }
 
 export function ChatInbox({ currentUserId }: { currentUserId: number }) {
@@ -253,7 +291,7 @@ export function ChatInbox({ currentUserId }: { currentUserId: number }) {
     return (
       <div className="space-y-4">
         <button onClick={() => setSelected(null)} className="flex items-center gap-1.5 text-sm font-bold text-brand-600 hover:text-brand-700"><Icon name="back" className="size-4" /> بازگشت به گفتگوها</button>
-        <div className="card-surface relative h-[min(680px,75dvh)] min-h-[430px] overflow-hidden">
+        <div className="card-surface relative h-[min(680px,calc(100dvh_-_11rem))] overflow-hidden">
           <ChatWindow conversationId={selected} title={item?.bookTitle ?? "گفتگو"} currentUserId={currentUserId} onClose={() => setSelected(null)} embedded />
         </div>
       </div>
