@@ -52,7 +52,7 @@ function Chip({
   };
   return (
     <span
-      className={`whitespace-nowrap rounded-2xl border px-3.5 py-2 text-[12.5px] font-bold transition ${
+      className={`inline-flex items-center justify-center whitespace-nowrap rounded-2xl border px-3.5 py-2 text-[12.5px] font-bold transition ${
         active ? tones[tone] : "border-ink-100 bg-white text-ink-600 hover:border-brand-200 hover:text-brand-700"
       }`}
     >
@@ -81,8 +81,13 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
   });
   const hasFilters = Boolean(q || kind || medium || offerType || category);
 
+  // کلاس استاندارد برای راست‌چین‌سازی واقعی بدون به هم ریختگی اسکرول
+  const scrollRowClass =
+    "flex items-center gap-2 overflow-x-auto overflow-y-hidden py-2 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden text-right";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-right" dir="rtl">
+      {/* هدر صفحه */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2.5 text-2xl font-extrabold tracking-tight text-ink-900">
@@ -105,10 +110,12 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
         </Link>
       </div>
 
-      {/* ---------------------- row 1: medium + sort ---------------------- */}
-      <div className="card-surface space-y-4 p-4">
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto">
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400">
+      {/* پنل فیلترها */}
+      <div className="card-surface space-y-3 p-4 overflow-hidden rounded-3xl shadow-sm bg-white border border-ink-100">
+        
+        {/* ردیف اول: بازار + مرتب‌سازی */}
+        <div className={scrollRowClass}>
+          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
             <Icon name="filter" className="size-4" />
             بازار:
           </span>
@@ -126,7 +133,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
               </Chip>
             </Link>
           ))}
-          <span className="mx-1 h-6 w-px shrink-0 bg-ink-100" />
+          <span className="mx-2 h-6 w-px shrink-0 bg-ink-100" />
           {SORTS.map((item) => (
             <Link
               key={item.value}
@@ -138,10 +145,10 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
           ))}
           {hasFilters && (
             <>
-              <span className="mx-1 h-6 w-px shrink-0 bg-ink-100" />
+              <span className="mx-2 h-6 w-px shrink-0 bg-ink-100" />
               <Link
                 href="/books"
-                className="whitespace-nowrap rounded-2xl border border-rose-100 bg-rose-50 px-3.5 py-2 text-[12.5px] font-bold text-rose-600"
+                className="shrink-0 whitespace-nowrap rounded-2xl border border-rose-100 bg-rose-50 px-3.5 py-2 text-[12.5px] font-bold text-rose-600 transition hover:bg-rose-100"
               >
                 حذف فیلترها
               </Link>
@@ -149,9 +156,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
           )}
         </div>
 
-        {/* --------------------- row 2: content type --------------------- */}
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-t border-dashed border-ink-100 pt-3">
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400">
+        {/* ردیف دوم: نوع */}
+        <div className={`${scrollRowClass} border-t border-dashed border-ink-100 pt-3`}>
+          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
             <Icon name="note" className="size-4" />
             نوع:
           </span>
@@ -167,9 +174,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
           ))}
         </div>
 
-        {/* --------------------- row 3: offer type ---------------------- */}
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-t border-dashed border-ink-100 pt-3">
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400">
+        {/* ردیف سوم: معامله */}
+        <div className={`${scrollRowClass} border-t border-dashed border-ink-100 pt-3`}>
+          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
             <Icon name="exchange" className="size-4" />
             معامله:
           </span>
@@ -189,9 +196,9 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
           ))}
         </div>
 
-        {/* ---------------------- row 4: category ---------------------- */}
-        <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-t border-dashed border-ink-100 pt-3">
-          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400">
+        {/* ردیف چهارم: رشته */}
+        <div className={`${scrollRowClass} border-t border-dashed border-ink-100 pt-3`}>
+          <span className="flex shrink-0 items-center gap-1 text-[12px] font-bold text-ink-400 ml-2">
             <Icon name="grad" className="size-4" />
             رشته:
           </span>
@@ -212,7 +219,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Search
         </div>
       </div>
 
-      {/* ------------------------------ results --------------------------- */}
+      {/* بخش نمایش کارت‌های کتاب */}
       {books.length ? (
         <BookCardGrid books={books} />
       ) : (
