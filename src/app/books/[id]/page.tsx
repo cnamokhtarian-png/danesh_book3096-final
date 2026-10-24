@@ -183,7 +183,7 @@ export default async function BookDetailPage({ params }: PageProps) {
         {/* --------------------------- main card --------------------------- */}
         <article className="card-surface overflow-hidden">
           {/* ------------------- گالری عکس / کاور پیش‌فرض ------------------- */}
-          <div className="border-b border-ink-100 bg-gradient-to-bl from-brand-50/80 via-white to-accent-400/10">
+          <div className="border-b border-ink-100">
             {photos.length > 0 ? (
               <div className="grid gap-2 p-4 sm:grid-cols-2 lg:grid-cols-3 lg:p-6">
                 {photos.map((photo) => (
@@ -209,62 +209,103 @@ export default async function BookDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          <div className="relative flex flex-wrap items-center gap-5 border-b border-ink-100 bg-gradient-to-bl from-brand-50/80 via-white to-accent-400/10 p-6">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={book.kind === "note" ? "amber" : "brand"}>
-                  {kindLabel(book.kind)}
-                </Badge>
-                <Badge tone="slate">
-                  {categoryEmoji(book.category)} {categoryLabel(book.category)}
-                </Badge>
-                {book.status === "exchanged" && <Badge tone="emerald">مبادله شد</Badge>}
-                {book.audience === "konkur" && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-l from-[#7c3aed] to-[#c026d3] px-2.5 py-1 text-[11px] font-bold text-white">
-                    ویژه کنکور
+          <div className="border-b border-ink-100 p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone={book.kind === "note" ? "amber" : "brand"}>
+                    {kindLabel(book.kind)}
+                  </Badge>
+                  <Badge tone="slate">
+                    {categoryEmoji(book.category)} {categoryLabel(book.category)}
+                  </Badge>
+                  {book.status === "exchanged" && <Badge tone="emerald">مبادله شد</Badge>}
+                  {book.audience === "konkur" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-l from-[#7c3aed] to-[#c026d3] px-2.5 py-1 text-[11px] font-bold text-white">
+                      ویژه کنکور
+                    </span>
+                  )}
+                  <Badge tone="slate">
+                    {offerEmoji(book.offerType)} {offerLabel(book.offerType)}
+                  </Badge>
+                  {book.isExchangeable && <Badge tone="rose">قابل تبادل</Badge>}
+                </div>
+                <h1 className="mt-3 text-[22px] leading-snug font-black tracking-tight text-ink-900 sm:text-[30px]">
+                  {book.title}
+                </h1>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11.5px] font-medium text-ink-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon name="clock" className="size-3.5" />
+                    {formatDate(book.createdAt)}
                   </span>
-                )}
-                <Badge tone="slate">
-                  {offerEmoji(book.offerType)} {offerLabel(book.offerType)}
-                </Badge>
-                {book.isExchangeable && <Badge tone="rose">قابل تبادل</Badge>}
-              </div>
-              <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-ink-900 sm:text-3xl">
-                {book.title}
-              </h1>
-              <p className="mt-2 text-sm text-ink-400">
-                منتشر شده در {formatDate(book.createdAt)} · {faNumber(book.views)} بازدید
-              </p>
-            </div>
-            <div className="text-left">
-              <p
-                className={`text-2xl font-black ${book.price === 0 ? "text-emerald-600" : "text-brand-700"}`}
-              >
-                {formatPrice(book.price, book.offerType)}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
-            {meta.map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center gap-3 rounded-2xl border border-ink-100 bg-ink-50/60 px-3.5 py-3"
-              >
-                <span className="grid size-9 place-items-center rounded-xl bg-white text-brand-600 shadow-sm">
-                  <Icon name={item.icon} className="size-4.5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium text-ink-400">{item.label}</p>
-                  <p className="truncate text-[13px] font-bold text-ink-900">{item.value}</p>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon name="eye" className="size-3.5" />
+                    {faNumber(book.views)} بازدید
+                  </span>
+                  {book.university && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="grad" className="size-3.5" />
+                      {book.university}
+                    </span>
+                  )}
                 </div>
               </div>
-            ))}
+              <div
+                className={`w-full shrink-0 rounded-2xl border px-4 py-3 sm:w-auto sm:min-w-[170px] ${
+                  book.price === 0
+                    ? "border-emerald-100 bg-emerald-50/70"
+                    : "border-brand-100 bg-brand-50/70"
+                }`}
+              >
+                <p className="text-[10.5px] font-bold text-ink-400">قیمت</p>
+                <p
+                  className={`mt-1 text-[19px] leading-tight font-black sm:text-xl ${
+                    book.price === 0 ? "text-emerald-600" : "text-brand-700"
+                  }`}
+                >
+                  {formatPrice(book.price, book.offerType)}
+                </p>
+                <p className="mt-1 text-[10.5px] font-medium text-ink-400">
+                  {book.offerType === "free"
+                    ? "بدون دریافت وجه"
+                    : book.offerType === "request"
+                      ? "دنبال این کتاب"
+                      : book.isExchangeable
+                        ? "قابل تبادل با کتاب شما"
+                        : "پرداخت نقدی"}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div className="border-t border-dashed border-ink-100 p-6">
-            <h2 className="mb-3 text-base font-extrabold text-ink-900">توضیحات</h2>
-            <p className="whitespace-pre-line text-[14px] leading-8 text-ink-600">
+          <div className="p-5 sm:p-6">
+            {/* ۸ خانه دقیقاً در ۲ ستون (موبایل/تبلت) یا ۴ ستون (دسکتاپ) جا می‌شود
+                تا هیچ خانه‌ی خالی با پس‌زمینه‌ی خطوط باقی نماند. */}
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-ink-100 bg-ink-100 lg:grid-cols-4">
+              {meta.map((item) => (
+                <div key={item.label} className="flex items-center gap-2.5 bg-white px-3.5 py-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                    <Icon name={item.icon} className="size-4.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10.5px] font-medium text-ink-400">{item.label}</p>
+                    <p className="mt-0.5 truncate text-[12.5px] font-extrabold text-ink-900">
+                      {item.value}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-ink-100 p-5 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 text-base font-extrabold text-ink-900">
+              <span className="grid size-8 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                <Icon name="note" className="size-4.5" />
+              </span>
+              توضیحات
+            </h2>
+            <p className="whitespace-pre-line text-[13.5px] leading-8 text-ink-600">
               {book.description?.trim() ||
                 "توضیحاتی برای این آگهی ثبت نشده است. برای کسب جزئیات بیشتر از طریق فرم درخواست با صاحب آگهی در ارتباط باشید."}
             </p>
@@ -272,7 +313,7 @@ export default async function BookDetailPage({ params }: PageProps) {
         </article>
 
         {/* --------------------------- side card --------------------------- */}
-        <aside className="space-y-4">
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="card-surface p-5">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-ink-900">
               <Icon name="user" className="size-4.5 text-brand-600" />
@@ -357,12 +398,35 @@ export default async function BookDetailPage({ params }: PageProps) {
  */
 function DefaultCover({ kind, category }: { kind: string; category: string }) {
   return (
-    <div className={`h-64 lg:h-80 rounded-2xl bg-gradient-to-bl ${coverGradient(category)} text-white flex flex-col items-center justify-center gap-2 p-6 shadow-lg shadow-ink-900/10`}>
-      <span className="text-6xl">{kindEmoji(kind)}</span>
-      <span className="text-base font-bold">{kindLabel(kind)}</span>
-      <span className="text-[12px] opacity-90">
-        {categoryEmoji(category)} {categoryLabel(category)}
-      </span>
+    <div className={`relative isolate overflow-hidden bg-gradient-to-bl ${coverGradient(category)}`}>
+      <div className="pointer-events-none absolute -top-24 end-[-8%] size-64 rounded-full bg-white/25 blur-3xl" aria-hidden />
+      <div className="pointer-events-none absolute -bottom-24 start-[-6%] size-72 rounded-full bg-ink-900/25 blur-3xl" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.18] [background-image:radial-gradient(circle_at_center,#fff_1px,transparent_0)] [background-size:20px_20px]"
+        aria-hidden
+      />
+      <div className="relative flex h-52 flex-col items-center justify-center gap-4 px-6 sm:h-60 lg:h-64">
+        <div className="relative [perspective:800px]">
+          <div
+            className="relative grid size-24 place-items-center rounded-2xl bg-white/95 shadow-[0_18px_40px_-12px_rgba(10,12,30,.55)] ring-1 ring-white/60 sm:size-28"
+            style={{ transform: "rotateX(6deg) rotateY(-12deg) rotate(-3deg)" }}
+          >
+            <span className="absolute inset-y-1.5 start-0 w-2 rounded-full bg-gradient-to-b from-white to-ink-900/10" aria-hidden />
+            <span className="absolute inset-0 rounded-2xl bg-gradient-to-tl from-transparent via-white/50 to-transparent opacity-60" aria-hidden />
+            <span className="relative text-4xl drop-shadow-sm sm:text-5xl">{kindEmoji(kind)}</span>
+          </div>
+          <span className="absolute -bottom-3 left-1/2 h-3 w-20 -translate-x-1/2 rounded-full bg-ink-900/30 blur-md" aria-hidden />
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-[11.5px] font-bold text-white ring-1 ring-white/30 backdrop-blur-md">
+            {kindEmoji(kind)} {kindLabel(kind)}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[11.5px] font-bold text-ink-800 shadow-sm">
+            {categoryEmoji(category)} {categoryLabel(category)}
+          </span>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-ink-900/15 to-transparent" aria-hidden />
     </div>
   );
 }
