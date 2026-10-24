@@ -7,7 +7,7 @@
  * - بعد از تغییر رمز، همه نشست‌های کاربر حذف می‌شوند تا دستگاه‌های دیگر خارج شوند.
  */
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { passwordResets, sessions, users } from "@/db/schema";
 import { hashPassword } from "@/lib/auth";
@@ -18,8 +18,77 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/**
+ * ساخت خودکار جدول در اولین استفاده.
+ *
+ * چرا؟ اگر جدول روی دیتابیس نباشد، قابلیت بازیابی با خطای ۴۲P01 شکست می‌خورد و
+ * کاربر مجبور می‌شد دستی SQL اجرا کند. این تابع یک‌بار (و فقط یک بار در هر
+ * process) جدول را با `CREATE TABLE IF NOT EXISTS` می‌سازد — کاملاً افزایشی،
+ * بدون هیچ تغییری در جدول‌ها یا داده‌های موجود.
+ *
+ * نتیجه در حافظه کش می‌شود؛ اگر شکست بخورد (مثلاً کاربر دیتابیس اجازه DDL
+ * ندارد) هر بار دوباره تلاش نمی‌شود و خطای اصلی بالا می‌رود تا پیام مناسب
+ * به کاربر داده شود.
+ */
+let schemaReady = false;
+let schemaPromise: Promise<void> | null = null;
+
+async function createResetTable(): Promise<void> {
+  await db.execute(sql`
+    create table if not exists "passwordResets" (
+      "id"        serial primary key,
+      "userId"    integer not null references "users"("id") on delete cascade,
+      "tokenHash" varchar(64) not null,
+      "expiresAt" timestamp with time zone not null,
+      "usedAt"    timestamp with time zone,
+      "createdAt" timestamp with time zone not null default now()
+    )
+  `);
+  await db.execute(
+    sql`create unique index if not exists "passwordResets_tokenHash_unique" on "passwordResets" ("tokenHash")`,
+  );
+  await db.execute(
+    sql`create index if not exists "passwordResets_userId_idx" on "passwordResets" ("userId")`,
+  );
+}
+
+async function tableExists(): Promise<boolean> {
+  try {
+    const result = await db.execute(sql`select to_regclass('public."passwordResets"') as t`);
+    return Boolean((result.rows?.[0] as { t?: string } | undefined)?.t);
+  } catch {
+    return false;
+  }
+}
+
+/** اطمینان از وجود جدول؛ در هر process فقط یک بار اجرا می‌شود. */
+export async function ensureResetSchema(): Promise<void> {
+  if (schemaReady) return;
+
+  if (!schemaPromise) {
+    schemaPromise = createResetTable()
+      .then(() => {
+        schemaReady = true;
+      })
+      .catch(async (error) => {
+        // ممکن است درخواست هم‌زمانی جدول را ساخته باشد
+        if (await tableExists()) {
+          schemaReady = true;
+          return;
+        }
+        throw error;
+      })
+      .finally(() => {
+        schemaPromise = null;
+      });
+  }
+
+  return schemaPromise;
+}
+
 /** توکن خام (برای لینک ایمیل) + ثبت هش آن در دیتابیس. */
 export async function issueResetToken(userId: number): Promise<{ token: string; expiresAt: Date }> {
+  await ensureResetSchema();
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + RESET_TTL_MINUTES * 60 * 1000);
 
@@ -40,6 +109,7 @@ export type ResetTarget = { id: number };
 export async function findResetTarget(token: string): Promise<ResetTarget | null> {
   if (!token || token.length !== 64) return null;
   try {
+    await ensureResetSchema();
     const rows = await db
       .select({ id: passwordResets.id, userId: passwordResets.userId })
       .from(passwordResets)

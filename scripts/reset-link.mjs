@@ -29,10 +29,23 @@ const client = new Client({ connectionString });
 try {
   await client.connect();
 
-  const check = await client.query("select to_regclass('public.\"passwordResets\"') as t");
-  if (!check.rows[0]?.t) {
-    fail('جدول passwordResets وجود ندارد. ابتدا npm run db:push را اجرا کنید.');
-  }
+  // ساخت خودکار جدول در صورت نبود (افزایشی و idempotent؛ هیچ داده‌ای تغییر نمی‌کند)
+  await client.query(`
+    create table if not exists "passwordResets" (
+      "id"        serial primary key,
+      "userId"    integer not null references "users"("id") on delete cascade,
+      "tokenHash" varchar(64) not null,
+      "expiresAt" timestamp with time zone not null,
+      "usedAt"    timestamp with time zone,
+      "createdAt" timestamp with time zone not null default now()
+    )
+  `);
+  await client.query(
+    'create unique index if not exists "passwordResets_tokenHash_unique" on "passwordResets" ("tokenHash")',
+  );
+  await client.query(
+    'create index if not exists "passwordResets_userId_idx" on "passwordResets" ("userId")',
+  );
 
   const found = await client.query('select "id", "fullName" from users where email = $1', [email]);
   const user = found.rows[0];
