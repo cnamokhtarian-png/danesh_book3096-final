@@ -4,6 +4,9 @@ import type { NextConfig } from "next";
  * هدرهای امنیتی پایه. قبلاً هیچ‌کدام تنظیم نشده بود.
  * CSP عمداً انعطاف‌پذیر است (inline style مجاز) تا ظاهر فعلی سایت نشکند.
  */
+const scriptSources = ["'self'", "'unsafe-inline'"];
+if (process.env.NODE_ENV !== "production") scriptSources.push("'unsafe-eval'");
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -16,7 +19,7 @@ const securityHeaders = [
       "img-src 'self' data: blob:",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      `script-src ${scriptSources.join(" ")}`,
       "connect-src 'self'",
       "frame-ancestors 'self'",
       "base-uri 'self'",

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { apiFetch } from "@/lib/api-client";
 
@@ -46,6 +47,7 @@ export function ChatLauncher({
   isLoggedIn: boolean;
   currentUserId?: number;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [error, setError] = useState("");
@@ -53,7 +55,7 @@ export function ChatLauncher({
 
   async function startChat() {
     if (!isLoggedIn) {
-      window.location.href = `/login?next=${encodeURIComponent(`/books/${bookId}`)}`;
+      router.push(`/login?next=${encodeURIComponent(`/books/${bookId}`)}`);
       return;
     }
     setOpen(true);

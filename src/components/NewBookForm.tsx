@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
@@ -728,10 +729,12 @@ export default function NewBookForm({ defaultUniversity }: { defaultUniversity?:
             {photos.map((entry) => (
               <div key={entry.id} className="flex flex-col items-center gap-2 w-40 group">
                 <div className="relative size-40 rounded-2xl overflow-hidden bg-ink-50 border border-ink-100">
-                  <img
+                  <Image
                     src={entry.previewUrl}
                     alt=""
-                    className="size-40 object-cover"
+                    fill
+                    sizes="160px"
+                    className="object-cover"
                     draggable={false}
                   />
                   {entry.status === "uploading" && (

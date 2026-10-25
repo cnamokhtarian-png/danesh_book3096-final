@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import {
@@ -26,12 +27,13 @@ export function BookCard({ book, photoUrl }: BookCardProps) {
   const isRequest = book.offerType === "request";
 
   const cover = photoUrl ? (
-    <img
+    <Image
       src={photoUrl}
       alt=""
+      width={56}
+      height={56}
+      sizes="56px"
       className="size-14 shrink-0 rounded-2xl object-cover"
-      loading="lazy"
-      decoding="async"
     />
   ) : (
     <span

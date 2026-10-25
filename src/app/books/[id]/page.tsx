@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookCardGrid } from "@/components/BookCard";
@@ -192,14 +193,15 @@ export default async function BookDetailPage({ params }: PageProps) {
                     href={`/api/photos/${photo.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block aspect-[4/3] rounded-xl overflow-hidden bg-ink-50"
+                    className="relative block aspect-[4/3] overflow-hidden rounded-xl bg-ink-50"
+                    aria-label={`نمایش عکس ${book.title}`}
                   >
-                    <img
+                    <Image
                       src={`/api/photos/${photo.id}`}
                       alt=""
-                      className="size-full object-cover"
-                      loading="lazy"
-                      decoding="async"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover"
                     />
                   </a>
                 ))}
