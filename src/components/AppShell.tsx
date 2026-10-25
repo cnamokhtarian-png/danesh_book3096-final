@@ -36,7 +36,7 @@ function Brand({ showText = true }: { showText?: boolean }) {
       {showText && (
         <span className="leading-tight">
           <span className="block text-lg font-extrabold tracking-tight text-ink-900">دانش‌بوک</span>
-          <span className="block text-[10.5px] font-medium text-ink-400">
+          <span className="hidden text-[10.5px] font-medium text-ink-400 sm:block">
             کتاب، جزوه و فایل دانشجویی
           </span>
         </span>
@@ -262,6 +262,14 @@ export default function AppShell({ user, children }: { user: ShellUser; children
       {/* ============================ TOP BAR ============================ */}
       <header className="sticky top-0 z-30 border-b border-ink-100/80 bg-white/80 backdrop-blur-xl md:pr-[86px] lg:pr-64">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="grid size-10 shrink-0 place-items-center rounded-2xl border border-ink-100 text-ink-600 md:hidden"
+            aria-label="باز کردن منو"
+          >
+            <Icon name="dashboard" className="size-5" />
+          </button>
           <div className="md:hidden">
             <Brand />
           </div>
@@ -292,14 +300,6 @@ export default function AppShell({ user, children }: { user: ShellUser; children
             >
               <Icon name="headset" className="size-5" />
             </Link>
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              className="grid size-10 place-items-center rounded-2xl border border-ink-100 text-ink-600 md:hidden"
-              aria-label="باز کردن منو"
-            >
-              <Icon name="dashboard" className="size-5" />
-            </button>
           </div>
         </div>
       </header>

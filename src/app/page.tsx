@@ -117,6 +117,7 @@ export default async function HomePage() {
       {/* بنر باریک تبلیغ بازی + بنر اصلی، با فاصله کم از هم */}
       <div className="space-y-3">
         <GamePromoBanner />
+        <SearchField className="md:hidden" />
         {/* ------------------------------- hero ------------------------------- */}
         <section className="animate-fade-up relative overflow-hidden rounded-[2rem] border border-ink-100 bg-white px-6 py-10 sm:px-10 sm:py-14">
           <div className="aurora-blob -end-24 -top-24 size-72 bg-brand-300" aria-hidden />
@@ -144,7 +145,7 @@ export default async function HomePage() {
                 </span>
               </h1>
 
-              <p className="mt-4 max-w-xl text-[15px] leading-8 text-ink-600">
+              <p className="mt-4 hidden max-w-xl text-[15px] leading-8 text-ink-600 sm:block">
                 دانش‌بوک دو بازار مجزا دارد: بخش فایل‌های دیجیتال برای دانلود جزوه، اسلاید و نمونه
                 سوال، و بخش کتاب‌های فیزیکی برای خرید، فروش، تبادل و واگذاری رایگان کتاب — به‌همراه
                 یک بخش ویژه و اختصاصی برای کنکوری‌ها.
@@ -166,7 +167,7 @@ export default async function HomePage() {
                 </Link>
               </div>
 
-              <div className="mt-8">
+              <div className="mt-8 hidden md:block">
                 <SearchField className="max-w-md" />
               </div>
             </div>

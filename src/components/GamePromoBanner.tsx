@@ -13,7 +13,7 @@ export default function GamePromoBanner() {
     <a
       href={GAME.path}
       aria-label={`${GAME.name} — ${GAME.description}`}
-      className="group relative block h-[76px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#0a0d14] shadow-lg shadow-[#0a0d14]/15 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#ff6b4a]/10 sm:h-[84px]"
+      className="group relative block h-[68px] overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#0a0d14] shadow-lg shadow-[#0a0d14]/15 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#ff6b4a]/10 sm:h-[84px]"
     >
       {/* فضای نئونی ملایم پشت محتوا */}
       <div
@@ -25,9 +25,9 @@ export default function GamePromoBanner() {
         aria-hidden
       />
 
-      <div className="relative flex h-full items-center gap-3 px-2.5 sm:gap-4 sm:px-4">
+      <div className="relative flex h-full items-center gap-2 px-2.5 sm:gap-4 sm:px-4">
         {/* تصویر بازی */}
-        <span className="relative block h-14 w-[92px] shrink-0 overflow-hidden rounded-xl border border-white/15 bg-[#111827] sm:h-16 sm:w-[132px]">
+        <span className="relative block h-14 w-[76px] shrink-0 overflow-hidden rounded-xl border border-white/15 bg-[#111827] sm:h-16 sm:w-[132px]">
           <Image
             src={GAME.image}
             alt="گربه نارنجی بیژن در خیابان بارانی و نئونی شب"
@@ -44,13 +44,10 @@ export default function GamePromoBanner() {
               <span className="size-1.5 animate-pulse rounded-full bg-[#ff6b4a]" />
               تازه رسید
             </span>
-            <p className="truncate text-[12.5px] font-extrabold text-white sm:text-[15px]">
-              بازی <span className="text-[#ffb35c]">بیژن</span> توی دانش بوکه!
+            <p className="truncate text-[14px] font-extrabold text-white sm:text-[16px]">
+              بازی <span className="text-[#ffb35c]">بیژن</span> توی دانش‌بوک
             </p>
           </div>
-          <p className="mt-1 truncate text-[10.5px] leading-5 text-slate-300/75 sm:text-[12px]">
-            {GAME.tagline} · رکورد بزن، ماهی بگیر، از ترافیک جا بمون
-          </p>
         </div>
 
         {/* دعوت به اقدام */}
