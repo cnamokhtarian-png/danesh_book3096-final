@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
 import type { Phase } from "../game/types";
 import {
   ArrowDownIcon,
@@ -12,6 +12,7 @@ import {
   SoundOffIcon,
   SoundOnIcon,
   SparkIcon,
+  ShareIcon,
 } from "./Icons";
 import { Keycap } from "./ui";
 
@@ -41,6 +42,28 @@ export function createHudRefs(): HudRefs {
   };
 }
 
+async function copyGameUrl(url: string) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(url);
+      return;
+    } catch {
+      // در بعضی مرورگرها Clipboard API اجازه نمی‌دهد؛ روش قدیمی‌تر را امتحان می‌کنیم.
+    }
+  }
+
+  const input = document.createElement("textarea");
+  input.value = url;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("Could not copy game link");
+}
+
 interface TopBarProps {
   phase: Phase;
   muted: boolean;
@@ -53,6 +76,32 @@ interface TopBarProps {
 export function TopBar({ phase, muted, hudRef, onToggleSound, onHelp, onPauseToggle }: TopBarProps) {
   const inRun = phase === "playing" || phase === "paused" || phase === "dying";
   const paused = phase === "paused";
+  const [shareNotice, setShareNotice] = useState("");
+
+  const shareGame = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "بیژن؛ گربه‌ای در خیابان",
+          text: "بیژن را بازی کن و رکورد بزن!",
+          url,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await copyGameUrl(url);
+      setShareNotice("لینک بازی کپی شد");
+    } catch {
+      window.prompt("لینک بازی را کپی کنید:", url);
+      setShareNotice("لینک بازی آمادهٔ اشتراک است");
+    }
+    window.setTimeout(() => setShareNotice(""), 2600);
+  };
 
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-40 px-4 pb-4 pt-[max(0.8rem,env(safe-area-inset-top))] md:px-7 md:pt-5">
@@ -155,6 +204,15 @@ export function TopBar({ phase, muted, hudRef, onToggleSound, onHelp, onPauseTog
           <button
             type="button"
             className="icon-btn"
+            onClick={shareGame}
+            aria-label="اشتراک‌گذاری بازی"
+            title="اشتراک‌گذاری بازی"
+          >
+            <ShareIcon className="h-4.5 w-4.5" />
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
             onClick={onToggleSound}
             aria-label={muted ? "روشن کردن صدا" : "قطع صدا"}
             title={muted ? "صدا خاموش است" : "صدا روشن است"}
@@ -179,6 +237,15 @@ export function TopBar({ phase, muted, hudRef, onToggleSound, onHelp, onPauseTog
           ) : null}
         </div>
       </div>
+      {shareNotice ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none absolute left-4 top-16 rounded-full border border-mint/25 bg-night/90 px-3 py-2 text-[11px] font-semibold text-cream shadow-lg backdrop-blur-md"
+        >
+          {shareNotice}
+        </div>
+      ) : null}
     </header>
   );
 }
