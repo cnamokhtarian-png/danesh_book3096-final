@@ -373,7 +373,7 @@ export function GameOverScreen({
               <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[9px] font-medium text-sand/68 sm:justify-start">
                 <span>فاصله یا R · شروع دوباره</span>
                 <span className="h-0.5 w-0.5 rounded-full bg-sand/40" />
-                <span>M · صدا</span>
+                <span>M · موسیقی و صدا</span>
                 <span className="h-0.5 w-0.5 rounded-full bg-sand/40" />
                 <span>Esc · صفحه اصلی</span>
               </div>
@@ -509,7 +509,7 @@ export function PauseScreen({ muted, onResume, onRestart, onQuit, onToggleSound 
         >
           <span className="flex items-center gap-2">
             {muted ? <SoundOffIcon className="h-4 w-4" /> : <SoundOnIcon className="h-4 w-4" />}
-            {muted ? "صدا خاموش است" : "صدا روشن است"}
+            {muted ? "موسیقی و صدا خاموش است" : "موسیقی و صدا روشن است"}
           </span>
           <span className="rounded-full border border-cream/12 px-2 py-0.5 text-[9px] text-sand/60">M</span>
         </button>

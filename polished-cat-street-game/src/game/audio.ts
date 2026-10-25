@@ -13,9 +13,26 @@ type ToneOptions = {
   attack?: number;
 };
 
+const MUSIC_BPM = 122;
+const SIXTEENTH = 60 / MUSIC_BPM / 4;
+const BASS_ROOTS = [110, 87.31, 130.81, 98]; // Am · F · C · G
+const LEAD = [
+  659.25, 0, 0, 783.99, 0, 0, 880, 0, 1046.5, 0, 0, 880, 0, 0, 783.99, 0,
+  587.33, 0, 659.25, 0, 0, 0, 783.99, 0, 880, 0, 0, 783.99, 0, 0, 659.25, 0,
+  659.25, 0, 0, 880, 0, 0, 1046.5, 0, 1174.66, 0, 0, 1046.5, 0, 0, 880, 0,
+  783.99, 0, 659.25, 0, 0, 0, 587.33, 0, 659.25, 0, 0, 783.99, 0, 0, 880, 0,
+];
+
 class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  private musicBus: GainNode | null = null;
+  private musicTimer: number | null = null;
+  private musicStep = 0;
+  private musicNextTime = 0;
+  private musicOrigin = 0;
+  private musicRequested = false;
+  private musicActive = false;
   muted = false;
 
   unlock() {
@@ -31,10 +48,17 @@ class Sfx {
         this.master.gain.value = 0.5;
         this.master.connect(this.ctx.destination);
       }
+      if (!this.musicBus && this.ctx && this.master) {
+        this.musicBus = this.ctx.createGain();
+        this.musicBus.gain.value = 0;
+        this.musicBus.connect(this.master);
+      }
       if (this.ctx.state === "suspended") void this.ctx.resume();
     } catch {
       this.ctx = null;
       this.master = null;
+      this.musicBus = null;
+      this.musicActive = false;
     }
   }
 
@@ -43,11 +67,126 @@ class Sfx {
     if (this.master && this.ctx) {
       this.master.gain.setTargetAtTime(muted ? 0 : 0.5, this.ctx.currentTime, 0.02);
     }
-    if (!muted) this.unlock();
+    if (muted) {
+      this.clearMusicTimer();
+      this.musicActive = false;
+      this.fadeMusicOut();
+    } else {
+      this.unlock();
+      if (this.musicRequested) this.beginMusic();
+    }
   }
 
-  private tone({ freq, to, dur = 0.14, type = "sine", vol = 0.2, delay = 0, attack = 0.006 }: ToneOptions) {
-    if (this.muted || !this.ctx || !this.master) return;
+  musicStart() {
+    this.musicRequested = true;
+    if (!this.muted) this.beginMusic();
+  }
+
+  musicStop() {
+    this.musicRequested = false;
+    this.clearMusicTimer();
+    this.musicActive = false;
+    this.fadeMusicOut();
+  }
+
+  private beginMusic() {
+    if (this.muted || this.musicActive) return;
+    this.unlock();
+    const ctx = this.ctx;
+    const bus = this.musicBus;
+    if (!ctx || !bus) return;
+    if (ctx.state === "suspended") void ctx.resume();
+
+    const now = ctx.currentTime;
+    bus.gain.cancelScheduledValues(now);
+    bus.gain.setValueAtTime(0, now);
+    bus.gain.linearRampToValueAtTime(0.64, now + 0.55);
+    this.musicStep = 0;
+    this.musicNextTime = now + 0.12;
+    this.musicOrigin = this.musicNextTime;
+    this.musicActive = true;
+    this.scheduleMusic();
+    this.musicTimer = window.setInterval(this.scheduleMusic, 25);
+  }
+
+  private clearMusicTimer() {
+    if (this.musicTimer !== null) window.clearInterval(this.musicTimer);
+    this.musicTimer = null;
+  }
+
+  private fadeMusicOut() {
+    if (!this.ctx || !this.musicBus) return;
+    const now = this.ctx.currentTime;
+    this.musicBus.gain.cancelScheduledValues(now);
+    this.musicBus.gain.setTargetAtTime(0, now, 0.045);
+  }
+
+  private scheduleMusic = () => {
+    const ctx = this.ctx;
+    if (!ctx || !this.musicActive || this.muted) return;
+    const horizon = ctx.currentTime + 0.12;
+    while (this.musicNextTime < horizon) {
+      this.scheduleMusicStep(this.musicStep, this.musicNextTime);
+      this.musicStep = (this.musicStep + 1) % LEAD.length;
+      this.musicNextTime += SIXTEENTH;
+    }
+  };
+
+  private scheduleMusicStep(step: number, at: number) {
+    const bus = this.musicBus;
+    const ctx = this.ctx;
+    if (!bus || !ctx) return;
+    const delay = Math.max(0, at - ctx.currentTime);
+    const beatStep = step % 16;
+    const bar = Math.floor(step / 16);
+    const root = BASS_ROOTS[bar] ?? BASS_ROOTS[0];
+
+    // Four-on-the-floor pulse, soft offbeat hats and a clap on beats two and four.
+    if (beatStep % 4 === 0) {
+      this.tone({ freq: 132, to: 48, dur: 0.14, type: "sine", vol: 0.19, delay, attack: 0.003 }, bus);
+      const beat = beatStep / 4;
+      const bassRatio = beat === 1 ? 1.5 : beat === 3 ? 1.25 : 1;
+      this.tone({ freq: root * bassRatio, to: root * bassRatio * 0.96, dur: 0.17, type: "triangle", vol: 0.11, delay: delay + 0.012, attack: 0.008 }, bus);
+      if (beatStep === 4 || beatStep === 12) {
+        this.noise(0.075, 0.035, 2600, delay, bus, "bandpass");
+      }
+    }
+    if (beatStep % 2 === 0) {
+      const hatVol = beatStep % 4 === 0 ? 0.012 : 0.022;
+      this.noise(0.038, hatVol, 6800, delay, bus, "highpass");
+    }
+
+    // Warm chord stabs outline the Am–F–C–G loop; a bright pentatonic hook sits above it.
+    if (beatStep === 0 || beatStep === 8) {
+      const third = bar === 0 ? 2.4 : 2.52;
+      const chord = [root * 2, root * third, root * 3];
+      for (const freq of chord) {
+        this.tone({ freq, dur: 0.27, type: "sine", vol: 0.026, delay, attack: 0.018 }, bus);
+      }
+    }
+    const lead = LEAD[step];
+    if (lead) {
+      this.tone({ freq: lead, dur: 0.13, type: "triangle", vol: 0.085, delay, attack: 0.005 }, bus);
+      this.tone({ freq: lead * 2, dur: 0.075, type: "sine", vol: 0.018, delay: delay + 0.012, attack: 0.003 }, bus);
+    }
+  }
+
+  private rhythmAccent(double = false) {
+    if (!this.musicActive || this.muted || !this.ctx || !this.musicBus) return;
+    const now = this.ctx.currentTime;
+    const beatDuration = 60 / MUSIC_BPM;
+    const nearestBeat = Math.round((now - this.musicOrigin) / beatDuration);
+    const beatAt = this.musicOrigin + nearestBeat * beatDuration;
+    const offset = beatAt - now;
+    // Keep jumping responsive: only nudge the musical accent when the beat is very close.
+    const delay = offset > 0 && offset < 0.075 ? offset : 0;
+    const notes = [783.99, 880, 1046.5, 1174.66];
+    const note = notes[((nearestBeat % notes.length) + notes.length) % notes.length];
+    this.tone({ freq: double ? note * 1.5 : note, to: double ? note * 1.9 : note * 1.16, dur: 0.13, type: "triangle", vol: double ? 0.09 : 0.065, delay, attack: 0.004 }, this.musicBus);
+  }
+
+  private tone({ freq, to, dur = 0.14, type = "sine", vol = 0.2, delay = 0, attack = 0.006 }: ToneOptions, destination: AudioNode | null = this.master) {
+    if (this.muted || !this.ctx || !destination) return;
     try {
       const ctx = this.ctx;
       const start = ctx.currentTime + delay;
@@ -62,7 +201,7 @@ class Sfx {
       gain.gain.linearRampToValueAtTime(vol, start + attack);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
       osc.connect(gain);
-      gain.connect(this.master);
+      gain.connect(destination);
       osc.start(start);
       osc.stop(start + dur + 0.02);
     } catch {
@@ -70,26 +209,34 @@ class Sfx {
     }
   }
 
-  private noise(dur = 0.2, vol = 0.14, lowpass = 900) {
-    if (this.muted || !this.ctx || !this.master) return;
+  private noise(
+    dur = 0.2,
+    vol = 0.14,
+    frequency = 900,
+    delay = 0,
+    destination: AudioNode | null = this.master,
+    filterType: BiquadFilterType = "lowpass",
+  ) {
+    if (this.muted || !this.ctx || !destination) return;
     try {
       const ctx = this.ctx;
-      const frames = Math.floor(ctx.sampleRate * dur);
+      const start = ctx.currentTime + delay;
+      const frames = Math.max(1, Math.floor(ctx.sampleRate * dur));
       const buffer = ctx.createBuffer(1, frames, ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < frames; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / frames);
       const src = ctx.createBufferSource();
       src.buffer = buffer;
       const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = lowpass;
+      filter.type = filterType;
+      filter.frequency.value = frequency;
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(vol, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+      gain.gain.setValueAtTime(vol, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
       src.connect(filter);
       filter.connect(gain);
-      gain.connect(this.master);
-      src.start();
+      gain.connect(destination);
+      src.start(start);
     } catch {
       /* noop */
     }
@@ -98,11 +245,13 @@ class Sfx {
   jump() {
     this.tone({ freq: 320, to: 640, dur: 0.16, type: "triangle", vol: 0.13 });
     this.tone({ freq: 640, to: 880, dur: 0.1, type: "sine", vol: 0.06, delay: 0.02 });
+    this.rhythmAccent();
   }
 
   doubleJump() {
     this.tone({ freq: 520, to: 980, dur: 0.18, type: "triangle", vol: 0.12 });
     this.tone({ freq: 1040, to: 1400, dur: 0.12, type: "sine", vol: 0.05, delay: 0.03 });
+    this.rhythmAccent(true);
   }
 
   slide() {

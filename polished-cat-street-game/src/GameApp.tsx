@@ -102,6 +102,8 @@ export default function GameApp() {
       onHud: paintHud,
       onPhase: (next) => {
         setPhase(next);
+        if (next === "playing") sfx.musicStart();
+        else sfx.musicStop();
         if (next !== "playing") setShowTutorial(false);
       },
       onGameOver: (result) => {

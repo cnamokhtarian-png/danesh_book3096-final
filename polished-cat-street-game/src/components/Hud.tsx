@@ -214,8 +214,8 @@ export function TopBar({ phase, muted, hudRef, onToggleSound, onHelp, onPauseTog
             type="button"
             className="icon-btn"
             onClick={onToggleSound}
-            aria-label={muted ? "روشن کردن صدا" : "قطع صدا"}
-            title={muted ? "صدا خاموش است" : "صدا روشن است"}
+            aria-label={muted ? "روشن کردن موسیقی و صدا" : "قطع موسیقی و صدا"}
+            title={muted ? "موسیقی و صدا خاموش است" : "موسیقی و صدا روشن است"}
           >
             {muted ? <SoundOffIcon className="h-4.5 w-4.5" /> : <SoundOnIcon className="h-4.5 w-4.5" />}
           </button>
@@ -282,7 +282,7 @@ export function GameControls({ phase, hudRef, showTutorial, onJump, onSlide, onZ
         }`}
       >
         <div className="glass rounded-full px-3 py-1.5 text-[9px] font-semibold text-cream/80">
-          بزن تا بپری <span className="mx-1 text-coral">·</span> برای سُر خوردن انگشت را پایین بکش
+          روی ضرب بزن تا بپری <span className="mx-1 text-coral">·</span> پایین بکش تا سُر بخوری
         </div>
       </div>
 
