@@ -274,9 +274,11 @@ export default function AppShell({ user, children }: { user: ShellUser; children
             <Brand />
           </div>
 
-          <div className="hidden md:block">
-            <SearchField className="w-64 lg:w-80" />
-          </div>
+          {pathname !== "/" && (
+            <div className="hidden md:block">
+              <SearchField className="w-64 lg:w-80" />
+            </div>
+          )}
 
           <div className="ms-auto flex items-center gap-2">
             <Link
