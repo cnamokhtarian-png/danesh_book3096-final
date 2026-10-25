@@ -129,6 +129,29 @@ export function TopBar({ phase, muted, hudRef, onToggleSound, onHelp, onPauseTog
         )}
 
         <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+          {/* پل ارتباطی بازی به سایت: همیشه (حتی حین بازی) در دسترس است. */}
+          <a
+            href="/"
+            className="icon-btn w-auto gap-1.5 px-2.5"
+            aria-label="بازگشت به دانش بوک"
+            title="بازگشت به دانش بوک"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3.5 10.5 12 3.5l8.5 7" />
+              <path d="M5.5 9.5V20h13V9.5" />
+              <path d="M9.75 20v-5.5h4.5V20" />
+            </svg>
+            <span className="hidden text-[10px] font-bold sm:inline">دانش بوک</span>
+          </a>
           <button
             type="button"
             className="icon-btn"

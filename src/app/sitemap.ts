@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { listBooksForSitemap } from "@/lib/queries";
+import { GAME } from "@/lib/game";
 import { SITE, absoluteUrl } from "@/lib/site";
 
 /**
@@ -42,6 +43,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
+    },
+    {
+      // صفحه تکفایل بازی که از public/games/bijan/index.html سرو میشود.
+      url: absoluteUrl(GAME.path),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
     },
   ];
 

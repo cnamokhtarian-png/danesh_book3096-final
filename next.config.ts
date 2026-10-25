@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  /**
+   * آدرس تمیز بازی: `/games/bijan` همان فایل تکفایل HTML بازی را از public
+   * نشان میدهد. بدون این rewrite فقط `/games/bijan/index.html` در دسترس بود.
+   * (Next بهطور پیشفرض `/games/bijan/` را به `/games/bijan` هدایت میکند.)
+   */
+  async rewrites() {
+    return [{ source: "/games/bijan", destination: "/games/bijan/index.html" }];
+  },
 };
 
 export default nextConfig;

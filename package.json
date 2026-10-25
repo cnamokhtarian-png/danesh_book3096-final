@@ -7,6 +7,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "game:dev": "npm --prefix polished-cat-street-game run dev",
+    "game:build": "npm --prefix polished-cat-street-game run build && node scripts/copy-game.mjs",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:seed": "node scripts/seed.mjs",

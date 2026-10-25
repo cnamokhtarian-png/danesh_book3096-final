@@ -3,6 +3,7 @@ import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
 import { BookCardGrid } from "@/components/BookCard";
 import JsonLd from "@/components/JsonLd";
+import GamePromoBanner from "@/components/GamePromoBanner";
 import { SearchField } from "@/components/AppShell";
 import { Icon, type IconName } from "@/components/Icon";
 import { EmptyState, SectionHeading, StatTile } from "@/components/ui";
@@ -112,76 +113,81 @@ export default async function HomePage() {
   return (
     <div className="space-y-14">
       <JsonLd data={siteSchema} />
-      {/* ------------------------------- hero ------------------------------- */}
-      <section className="animate-fade-up relative overflow-hidden rounded-[2rem] border border-ink-100 bg-white px-6 py-10 sm:px-10 sm:py-14">
-        <div className="aurora-blob -end-24 -top-24 size-72 bg-brand-300" aria-hidden />
-        <div
-          className="aurora-blob -bottom-32 start-0 size-80 bg-accent-400/70"
-          style={{ animationDelay: "-6s" }}
-          aria-hidden
-        />
 
-        <div className="relative grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-3 py-1.5 text-[12px] font-bold text-brand-700 shadow-sm">
-              <Icon name="sparkles" className="size-4" />
-              بازار دانشجویی کتاب، جزوه و فایل‌های درسی
-            </span>
+      {/* بنر باریک تبلیغ بازی + بنر اصلی، با فاصله کم از هم */}
+      <div className="space-y-3">
+        <GamePromoBanner />
+        {/* ------------------------------- hero ------------------------------- */}
+        <section className="animate-fade-up relative overflow-hidden rounded-[2rem] border border-ink-100 bg-white px-6 py-10 sm:px-10 sm:py-14">
+          <div className="aurora-blob -end-24 -top-24 size-72 bg-brand-300" aria-hidden />
+          <div
+            className="aurora-blob -bottom-32 start-0 size-80 bg-accent-400/70"
+            style={{ animationDelay: "-6s" }}
+            aria-hidden
+          />
 
-            <h1 className="mt-5 text-3xl leading-[1.35] font-extrabold tracking-tight text-ink-900 sm:text-[2.5rem] sm:leading-[1.3]">
-              همه‌چیز برای درس‌هایت، از{" "}
-              <span className="bg-gradient-to-l from-brand-600 via-brand-500 to-accent-500 bg-clip-text text-transparent">
-                کتاب فیزیکی
-              </span>{" "}
-              تا{" "}
-              <span className="bg-gradient-to-l from-cyan-500 to-brand-500 bg-clip-text text-transparent">
-                فایل دیجیتال
+          <div className="relative grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-3 py-1.5 text-[12px] font-bold text-brand-700 shadow-sm">
+                <Icon name="sparkles" className="size-4" />
+                بازار دانشجویی کتاب، جزوه و فایل‌های درسی
               </span>
-            </h1>
 
-            <p className="mt-4 max-w-xl text-[15px] leading-8 text-ink-600">
-              دانش‌بوک دو بازار مجزا دارد: بخش فایل‌های دیجیتال برای دانلود جزوه، اسلاید و نمونه
-              سوال، و بخش کتاب‌های فیزیکی برای خرید، فروش، تبادل و واگذاری رایگان کتاب — به‌همراه
-              یک بخش ویژه و اختصاصی برای کنکوری‌ها.
-            </p>
+              <h1 className="mt-5 text-3xl leading-[1.35] font-extrabold tracking-tight text-ink-900 sm:text-[2.5rem] sm:leading-[1.3]">
+                همه‌چیز برای درس‌هایت، از{" "}
+                <span className="bg-gradient-to-l from-brand-600 via-brand-500 to-accent-500 bg-clip-text text-transparent">
+                  کتاب فیزیکی
+                </span>{" "}
+                تا{" "}
+                <span className="bg-gradient-to-l from-cyan-500 to-brand-500 bg-clip-text text-transparent">
+                  فایل دیجیتال
+                </span>
+              </h1>
 
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link
-                href="/register"
-                className="rounded-2xl bg-gradient-to-l from-brand-700 via-brand-600 to-brand-500 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition hover:-translate-y-0.5"
-              >
-                شروع رایگان
-              </Link>
-              <Link
-                href="/books"
-                className="flex items-center gap-2 rounded-2xl border border-ink-100 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition hover:border-brand-200 hover:text-brand-700"
-              >
-                <Icon name="books" className="size-4.5" />
-                مرور همه آگهی‌ها
-              </Link>
+              <p className="mt-4 max-w-xl text-[15px] leading-8 text-ink-600">
+                دانش‌بوک دو بازار مجزا دارد: بخش فایل‌های دیجیتال برای دانلود جزوه، اسلاید و نمونه
+                سوال، و بخش کتاب‌های فیزیکی برای خرید، فروش، تبادل و واگذاری رایگان کتاب — به‌همراه
+                یک بخش ویژه و اختصاصی برای کنکوری‌ها.
+              </p>
+
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/register"
+                  className="rounded-2xl bg-gradient-to-l from-brand-700 via-brand-600 to-brand-500 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition hover:-translate-y-0.5"
+                >
+                  شروع رایگان
+                </Link>
+                <Link
+                  href="/books"
+                  className="flex items-center gap-2 rounded-2xl border border-ink-100 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition hover:border-brand-200 hover:text-brand-700"
+                >
+                  <Icon name="books" className="size-4.5" />
+                  مرور همه آگهی‌ها
+                </Link>
+              </div>
+
+              <div className="mt-8">
+                <SearchField className="max-w-md" />
+              </div>
             </div>
 
-            <div className="mt-8">
-              <SearchField className="max-w-md" />
+            <div className="relative mx-auto w-full max-w-sm">
+              <div
+                className="absolute inset-0 -z-10 rotate-6 rounded-[2.5rem] bg-gradient-to-br from-brand-100 to-accent-400/20"
+                aria-hidden
+              />
+              <Image
+                src="/images/hero.jpg"
+                alt="دانشجویان در حال تبادل کتاب و جزوه"
+                width={640}
+                height={640}
+                priority
+                className="animate-float w-full rounded-[2rem] object-cover shadow-2xl shadow-brand-900/20"
+              />
             </div>
           </div>
-
-          <div className="relative mx-auto w-full max-w-sm">
-            <div
-              className="absolute inset-0 -z-10 rotate-6 rounded-[2.5rem] bg-gradient-to-br from-brand-100 to-accent-400/20"
-              aria-hidden
-            />
-            <Image
-              src="/images/hero.jpg"
-              alt="دانشجویان در حال تبادل کتاب و جزوه"
-              width={640}
-              height={640}
-              priority
-              className="animate-float w-full rounded-[2rem] object-cover shadow-2xl shadow-brand-900/20"
-            />
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* ------------------------------ stats ------------------------------ */}
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
