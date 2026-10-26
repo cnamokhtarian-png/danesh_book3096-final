@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import SeedDemoButton from "@/components/SeedDemoButton";
 import SuggestionManager from "@/components/SuggestionManager";
 import { Icon } from "@/components/Icon";
 import { Badge, EmptyState, StatTile } from "@/components/ui";
 import { getCurrentUser, isAdminUser } from "@/lib/auth";
 import { faNumber, formatDate, MANAGEMENT_EMAIL } from "@/lib/constants";
-import { demoContentStatus, seedDemoContent } from "@/lib/demo-content";
 import { getStats, listSuggestions, listUsersForAdmin } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -33,23 +31,10 @@ export default async function AdminPage() {
     );
   }
 
-  // اگر سایت هنوز محتوای نمونه ندارد، همان لحظه‌ی باز کردن پنل مدیریت ساخته
-  // می‌شود تا مدیر مجبور نباشد کاری دستی انجام دهد. idempotent است، پس اگر
-  // محتوا وجود داشته باشد هیچ اتفاقی نمی‌افتد.
-  const before = await demoContentStatus();
-  if (before.users === 0) {
-    try {
-      await seedDemoContent();
-    } catch (error) {
-      console.error("[daneshbook:seed] auto-seed failed:", (error as Error).message);
-    }
-  }
-
-  const [stats, suggestions, users, demo] = await Promise.all([
+  const [stats, suggestions, users] = await Promise.all([
     getStats(),
     listSuggestions(),
     listUsersForAdmin(),
-    demoContentStatus(),
   ]);
 
   return (
@@ -106,8 +91,6 @@ export default async function AdminPage() {
           tone="amber"
         />
       </section>
-
-      <SeedDemoButton demoUsers={demo.users} />
 
       <SuggestionManager items={suggestions} />
 
